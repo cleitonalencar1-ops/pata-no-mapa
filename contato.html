@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Contato — Pata no Mapa</title>
+<meta name="description" content="Quer agendar um passeio ou tirar dúvidas? Fale conosco pelo WhatsApp ou envie um e-mail." />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7fbff;
+    --card:#ffffff;
+    --primary:#0f66a8;
+    --accent:#ff7a59;
+    --muted:#6b7280;
+    --radius:12px;
+    --container:1100px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#0b2540;background:var(--bg);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:var(--container);margin:28px auto;padding:18px}
+  .hero{display:grid;grid-template-columns:1fr 420px;gap:18px;align-items:center;margin-bottom:18px}
+  @media(max-width:980px){ .hero{grid-template-columns:1fr} }
+  .hero .card{border-radius:var(--radius);overflow:hidden;box-shadow:0 12px 40px rgba(12,30,50,0.06)}
+  .hero-visual{height:260px;background:url('https://images.unsplash.com/photo-1507149833265-60c372daea22?auto=format&w=1600&q=80&fit=crop') center/cover no-repeat}
+  .hero-content{padding:20px;background:var(--card)}
+  h1{margin:0 0 8px 0;font-size:22px}
+  p.lead{margin:0;color:var(--muted)}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 30px rgba(12,30,50,0.06);padding:18px}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+  @media(max-width:980px){ .grid{grid-template-columns:1fr} }
+
+  label{display:block;font-weight:600;margin-bottom:6px;font-size:14px}
+  input[type="text"], input[type="email"], textarea, input[type="tel"]{
+    width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;background:#fff;font-size:14px
+  }
+  textarea{min-height:92px;resize:vertical}
+  .row{display:flex;gap:10px}
+  .row .col{flex:1}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:0;background:var(--primary);color:#fff;cursor:pointer;font-weight:600}
+  .btn.ghost{background:transparent;color:var(--primary);border:1px solid #dbeff9}
+  .btn.whatsapp{background:#25d366}
+  .small{font-size:13px;color:var(--muted)}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+
+  .contact-info{display:flex;flex-direction:column;gap:12px}
+  .info-item{display:flex;gap:12px;align-items:center}
+  .icon{width:44px;height:44px;border-radius:10px;background:#f2f9ff;display:grid;place-items:center;color:var(--primary);font-weight:700}
+  .meta{display:flex;flex-direction:column}
+  .meta b{font-size:15px}
+  .meta span{font-size:13px;color:var(--muted)}
+
+  .vcard{display:inline-block;margin-top:8px;padding:8px 10px;border-radius:8px;background:#f6fffb;border:1px solid #dff7ec;color:#0a6b3f;font-weight:700}
+
+  footer{margin-top:20px;text-align:center;color:var(--muted);font-size:13px}
+  .note{font-size:13px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="card hero-visual" role="img" aria-label="Pessoa passeando com cachorro ao pôr do sol"></div>
+
+      <div class="card hero-content" aria-labelledby="contatoTitulo">
+        <h1 id="contatoTitulo">Entre em Contato</h1>
+        <p class="lead">Quer agendar um passeio ou tirar dúvidas? Fale comigo!</p>
+
+        <div style="margin-top:12px" class="contact-info" aria-hidden="false">
+          <div class="info-item">
+            <div class="icon">💬</div>
+            <div class="meta">
+              <b>Falar no WhatsApp</b>
+              <span>Clique para abrir um chat — resposta rápida via WhatsApp.</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="icon">✉️</div>
+            <div class="meta">
+              <b>E-mail</b>
+              <span id="emailText">contato@patanomapa.com.br</span>
+            </div>
+          </div>
+
+          <div style="margin-top:6px" class="actions">
+            <!-- NOTE: troque "seunumero" por seu número no formato internacional sem sinais, ex: 5519XXXXXXXX -->
+            <a id="whatsappBtn" class="btn whatsapp" href="https://wa.me/seunumero" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp">
+              <!-- SVG WhatsApp -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden focusable="false">
+                <path d="M20.5 3.5H3.5C3.5 3.5 3.5 6.5 3.5 8.5C3.5 13.0 7.5 17 12.0 17.5C13.6 17.7 15.1 17.2 16.4 16.2L20.5 20.5L20.5 3.5Z" fill="#fff" opacity="0.06"/>
+                <path d="M17.472 14.382C16.928 14.98 16.28 15.4978 15.549 15.912C14.133 16.678 11.067 17.6 9.25399 17.6C5.22799 17.6 2.19999 14.592 2.19999 10.6C2.19999 6.607 5.22799 3.6 9.25499 3.6C13.282 3.6 16.309 6.607 16.309 10.6C16.309 11.959 15.929 13.246 15.246 14.356L17.472 14.382Z" fill="#fff"/>
+              </svg>
+              Falar no WhatsApp
+            </a>
+
+            <button id="copyEmailBtn" class="btn ghost" title="Copiar e-mail">Copiar e-mail</button>
+
+            <button id="vcardBtn" class="vcard" title="Baixar vCard">Download vCard</button>
+          </div>
+
+          <div class="note">ou envie um e-mail para <strong>contato@patanomapa.com.br</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Formulário de contato (abre cliente de e-mail com mailto:) -->
+      <div class="card" aria-labelledby="formTitulo">
+        <h2 id="formTitulo">Enviar mensagem</h2>
+        <p class="small">Preencha o formulário; ao enviar, seu cliente de e-mail será aberto com o conteúdo pronto para envio.</p>
+
+        <form id="contactForm">
+          <label for="nome">Seu nome</label>
+          <input id="nome" type="text" placeholder="Ex: Carla Silva" required>
+
+          <label for="whatsapp">WhatsApp (opcional)</label>
+          <input id="whatsapp" type="tel" placeholder="(xx) 9xxxx-xxxx">
+
+          <label for="assunto">Assunto</label>
+          <input id="assunto" type="text" placeholder="Ex: Agendamento para terça" required>
+
+          <label for="mensagem">Mensagem</label>
+          <textarea id="mensagem" placeholder="Descreva seu pedido ou dúvida" required></textarea>
+
+          <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+            <button type="submit" class="btn">✉️ Abrir e-mail</button>
+            <button type="button" id="sendWhatsappPrefill" class="btn whatsapp">📲 Abrir WhatsApp com mensagem</button>
+            <div style="margin-left:auto" class="small">Resposta via WhatsApp: rápido e prático.</div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Painel lateral com informações adicionais -->
+      <aside class="card" aria-labelledby="infoTitulo">
+        <h3 id="infoTitulo">Outras formas</h3>
+        <p class="small">Se preferir, podemos marcar por telefone, ou você pode salvar nossos dados no seu contato.</p>
+
+        <div style="margin-top:12px">
+          <button id="downloadJsonContact" class="btn ghost">⬇️ Baixar contato (JSON)</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <strong>Endereço</strong>
+          <div class="small">Águas de São Pedro / São Pedro — SP (atendimento local)</div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>© 2025 Pata no Mapa — Projeto acadêmico de Cleiton Alencar</footer>
+  </div>
+
+<script>
+/*
+  Observações:
+  - Substitua 'seunumero' no link do WhatsApp por seu número em formato internacional sem sinais,
+    por exemplo: 551912345678 para Brasil (55 + DDD + número sem espaços).
+  - O formulário não envia dados ao servidor — ele prepara um mailto: e abre o cliente de e-mail do usuário.
+*/
+
+/* DOM */
+const copyEmailBtn = document.getElementById('copyEmailBtn');
+const emailTextEl = document.getElementById('emailText');
+const vcardBtn = document.getElementById('vcardBtn');
+const contactForm = document.getElementById('contactForm');
+const sendWhatsappPrefill = document.getElementById('sendWhatsappPrefill');
+const whatsappBtn = document.getElementById('whatsappBtn');
+const downloadJsonContact = document.getElementById('downloadJsonContact');
+
+/* Valores de contato — edite aqui se quiser */
+const CONTACT = {
+  name: "Pata no Mapa",
+  phone_international: "seunumero", // substitua: ex "551912345678"
+  email: "contato@patanomapa.com.br",
+  org: "Pata no Mapa",
+  city: "São Pedro, SP",
+  url: ""
+};
+
+/* Copiar e-mail */
+copyEmailBtn.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(CONTACT.email);
+    copyEmailBtn.textContent = 'E-mail copiado!';
+    setTimeout(()=> copyEmailBtn.textContent = 'Copiar e-mail', 2000);
+  } catch(e){
+    alert('Não foi possível copiar automaticamente. E-mail: ' + CONTACT.email);
+  }
+});
+
+/* vCard (.vcf) download */
+vcardBtn.addEventListener('click', () => {
+  const vcf = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    `FN:${CONTACT.name}`,
+    `ORG:${CONTACT.org}`,
+    CONTACT.phone_international ? `TEL;TYPE=WORK,VOICE:+${CONTACT.phone_international}` : '',
+    `EMAIL:${CONTACT.email}`,
+    `ADR:;;${CONTACT.city};;;`,
+    CONTACT.url ? `URL:${CONTACT.url}` : '',
+    "END:VCARD"
+  ].filter(Boolean).join("\r\n");
+
+  const blob = new Blob([vcf], {type: "text/vcard;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'patanomapa.vcf';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+/* contact JSON download */
+downloadJsonContact.addEventListener('click', () => {
+  const payload = {...CONTACT};
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'patanomapa_contact.json'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+/* Form submit -> abre cliente de e-mail via mailto: (com assunto e corpo) */
+contactForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const nome = document.getElementById('nome').value.trim();
+  const whatsapp = document.getElementById('whatsapp').value.trim();
+  const assunto = document.getElementById('assunto').value.trim() || 'Contato pelo site';
+  const mensagem = document.getElementById('mensagem').value.trim();
+
+  if(!nome || !assunto || !mensagem){
+    alert('Por favor preencha os campos obrigatórios.');
+    return;
+  }
+
+  let body = `Nome: ${nome}%0D%0A`;
+  if(whatsapp) body += `WhatsApp: ${whatsapp}%0D%0A`;
+  body += `%0D%0A${encodeURIComponent(mensagem)}`;
+
+  // compose mailto
+  const mailto = `mailto:${CONTACT.email}?subject=${encodeURIComponent(assunto)}&body=${body}`;
+  window.location.href = mailto;
+});
+
+/* Abrir WhatsApp com mensagem predefinida a partir do formulário */
+sendWhatsappPrefill.addEventListener('click', () => {
+  const nome = document.getElementById('nome').value.trim();
+  const assunto = document.getElementById('assunto').value.trim() || 'Agendamento';
+  const mensagem = document.getElementById('mensagem').value.trim();
+  if(!nome || !mensagem){
+    alert('Por favor preencha pelo menos seu nome e a mensagem para enviar via WhatsApp.');
+    return;
+  }
+  // se CONTACT.phone_international for 'seunumero' instruí o usuário a trocar
+  if(!CONTACT.phone_international || CONTACT.phone_international === 'seunumero'){
+    // abre com link genérico (usa número placeholder)
+    const pre = `Olá, sou ${nome}. ${assunto} — ${mensagem}`;
+    const waUrl = `https://wa.me/${CONTACT.phone_international}?text=${encodeURIComponent(pre)}`;
+    window.open(waUrl, '_blank');
+    return;
+  }
+  const text = `Olá, sou ${nome}. ${assunto} — ${mensagem}`;
+  const waUrl = `https://wa.me/${CONTACT.phone_international}?text=${encodeURIComponent(text)}`;
+  window.open(waUrl, '_blank');
+});
+
+/* atualiza botão WhatsApp visível (link) caso o número seja preenchido */
+(function updateWhatsappHref(){
+  const btn = document.getElementById('whatsappBtn');
+  if(CONTACT.phone_international && CONTACT.phone_international !== 'seunumero'){
+    btn.href = `https://wa.me/${CONTACT.phone_international}`;
+    btn.setAttribute('aria-label','Abrir WhatsApp - Pata no Mapa');
+  } else {
+    btn.href = 'https://wa.me/seunumero';
+    btn.setAttribute('aria-label','Abrir WhatsApp (substitua seunumero pelo número real)');
+  }
+})();
+
+</script>
+</body>
+</html>

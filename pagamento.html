@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Pata no Mapa — Pagamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#0f66a8;
+    --accent:#ffcc33;
+    --bg:#f7f9fc;
+    --card:#fff;
+    --muted:#525f6b;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Poppins',system-ui,Arial;margin:0;background:var(--bg);color:#0b1720}
+  .wrap{max-width:920px;margin:28px auto;padding:18px}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+  @media(max-width:980px){ .grid{grid-template-columns:1fr} }
+  .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 12px 40px rgba(12,30,50,0.06)}
+  h1{margin:0 0 8px 0;color:var(--primary)}
+  .summary{background:#f1f7fb;padding:12px;border-radius:10px;margin-bottom:12px}
+  label{display:block;margin:10px 0 6px;font-weight:600}
+  input, select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;background:#fff}
+  .btn{display:inline-block;background:var(--accent);color:#000;padding:10px 12px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+  .btn.primary{background:var(--primary);color:#fff}
+  .btn.ghost{background:transparent;border:1px solid #e6eef6;color:var(--muted)}
+  .small{font-size:13px;color:var(--muted)}
+  .pix-box{border:2px dashed #e6eef6;padding:12px;border-radius:10px;background:#fbfeff}
+  .qr{width:200px;height:200px;border-radius:8px;background:#fff;display:block;margin:8px 0}
+  .copyBtn{background:#0f66a8;color:#fff;padding:8px 10px;border-radius:8px;border:0;cursor:pointer}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Pagamento do Passeio</h1>
+    <p class="small">Escolha sua forma de pagamento. Use PIX para pagamento rápido via Mercado Pago (Chave CPF).</p>
+
+    <div class="grid">
+      <!-- LEFT: opções de pagamento -->
+      <div class="card">
+        <div class="summary" id="bookingSummary">
+          <strong>Resumo do agendamento</strong>
+          <div id="summaryContent" style="margin-top:8px">
+            <!-- preenchido por JS -->
+            <div class="small">Nenhum agendamento em andamento. <a href="agendamento.html">Voltar para agendar</a></div>
+          </div>
+        </div>
+
+        <!-- PIX -->
+        <div>
+          <h3 style="margin:0 0 8px 0">Pagar com PIX (Mercado Pago)</h3>
+          <div class="pix-box">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-weight:700">Chave PIX (CPF)</div>
+                <div class="small" style="margin-top:4px">Mercado Pago</div>
+              </div>
+              <div style="text-align:right">
+                <button id="copyPixBtn" class="copyBtn">Copiar chave</button>
+              </div>
+            </div>
+
+            <div style="margin-top:12px;font-size:18px;font-weight:700" id="pixKey">26840858898</div>
+            <div class="note">Chave CPF registrada no Mercado Pago. Ao realizar o PIX, utilize o valor exibido no resumo e, se possível, informe nos detalhes da transferência o nome do titular do agendamento.</div>
+
+            <!-- QR (gera imagem de QR que contém o texto "pix:26840858898" para auxiliar) -->
+            <img id="pixQr" class="qr" alt="QR Code PIX" src="">
+
+            <div class="actions">
+              <button id="pixPaidBtn" class="btn primary">Já paguei via PIX</button>
+              <button id="pixHelpBtn" class="btn ghost">Como pagar com PIX?</button>
+            </div>
+          </div>
+
+          <div style="margin-top:14px">
+            <h4 style="margin:0 0 6px 0">Cartão (alternativa)</h4>
+            <div class="small">Pagamento com cartão é simulado neste ambiente de demonstração.</div>
+
+            <label for="cardName">Nome no cartão</label>
+            <input id="cardName" type="text" placeholder="Nome impresso no cartão">
+
+            <label for="cardNumber">Número do cartão</label>
+            <input id="cardNumber" type="text" maxlength="19" placeholder="0000 0000 0000 0000">
+
+            <div style="display:flex;gap:8px">
+              <div style="flex:1">
+                <label for="expiry">Validade</label>
+                <input id="expiry" placeholder="MM/AA">
+              </div>
+              <div style="width:110px">
+                <label for="cvv">CVV</label>
+                <input id="cvv" placeholder="123">
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="payCardBtn" class="btn">Pagar com Cartão (Simulado)</button>
+              <button id="cancelBtn" class="btn ghost">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: informações e histórico -->
+      <aside class="card">
+        <h3 style="margin:0 0 8px 0">Informações</h3>
+        <div class="small">
+          <strong>Chave PIX (CPF):</strong> <span id="pixKey2">26840858898</span><br>
+          <strong>Recebedor:</strong> Pata no Mapa (Mercado Pago)<br>
+          <strong>Contato:</strong> +55 (19) 99661-0197 • <a href="mailto:cleiton.alencar1@gmail.com">cleiton.alencar1@gmail.com</a>
+        </div>
+
+        <div style="margin-top:12px">
+          <strong>Últimos agendamentos (local)</strong>
+          <div id="historyList" style="margin-top:8px" class="small">Carregando...</div>
+        </div>
+
+        <div style="margin-top:14px">
+          <strong>Ajuda</strong>
+          <div class="small" style="margin-top:6px">Se preferir eu posso gerar o QR-EMV oficial do PIX (recomendado para pagamentos automáticos). Informe o valor e eu gero o payload — ou integramos com um gateway (Mercado Pago) para pagamentos totalmente automáticos.</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script>
+/*
+  Pagamento com PIX (chave CPF 26840858898 - Mercado Pago)
+  - Copiar chave
+  - Mostrar QR (com texto simples "pix:CHAVE" para ajudar; não é QR-EMV oficial)
+  - "Já paguei via PIX" simula confirmação do pagamento e finaliza o booking
+  - Integra com localStorage: se existir 'patanomapa_booking_pending' será usado como resumo
+  - Ao confirmar, cria ou concatena em 'patanomapa_bookings_confirmed' e direciona para confirmacao.html
+*/
+
+const PIX_KEY = '26840858898';
+document.getElementById('pixKey').textContent = PIX_KEY;
+document.getElementById('pixKey2').textContent = PIX_KEY;
+
+// Gera um QR auxiliar usando Google Chart API que codifica texto simples "PIX:CHAVE"
+// Observação: para um QR-EMV válido do PIX precisamos montar payload EMV; aqui geramos QR que encodes the key as a convenience.
+function updateQr(){
+  const text = `PIX:${PIX_KEY}`;
+  const size = 400; // px
+  const url = `https://chart.googleapis.com/chart?cht=qr&chs=400x400&chl=${encodeURIComponent(text)}&chld=L|1`;
+  document.getElementById('pixQr').src = url;
+}
+updateQr();
+
+// copiar chave
+document.getElementById('copyPixBtn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(PIX_KEY);
+    const b = document.getElementById('copyPixBtn');
+    b.textContent = 'Chave copiada';
+    setTimeout(()=> b.textContent = 'Copiar chave', 2500);
+  } catch(err){
+    alert('Não foi possível copiar automaticamente. Chave: ' + PIX_KEY);
+  }
+});
+
+// carregar resumo do agendamento pendente (salvo por agendamento.html -> patanomapa_booking_pending)
+function loadPendingBooking(){
+  const el = document.getElementById('summaryContent');
+  const raw = localStorage.getItem('patanomapa_booking_pending');
+  if(!raw){
+    el.innerHTML = `<div class="small">Nenhum agendamento em andamento. <a href="agendamento.html">Voltar para agendar</a></div>`;
+    return null;
+  }
+  try {
+    const b = JSON.parse(raw);
+    // mostra resumo
+    el.innerHTML = `
+      <div><strong>${escapeHtml(b.tutor || '—')}</strong> — Pet: ${escapeHtml(b.pet || '—')}</div>
+      <div class="small">Data: ${escapeHtml(b.date || '—')} • Hora: ${escapeHtml(b.time || '—')} • Duração: ${escapeHtml((b.duration_min||'—') + ' min')}</div>
+      <div class="small" style="margin-top:6px">Bairro: <strong>${escapeHtml(b.bairro || '—')}</strong></div>
+      <div class="small" style="margin-top:6px">Valor: <strong>R$ ${Number(b.price || 50).toFixed(2)}</strong></div>
+    `;
+    return b;
+  } catch(e){
+    el.innerHTML = `<div class="small">Erro ao ler o agendamento pendente.</div>`;
+    return null;
+  }
+}
+const pending = loadPendingBooking();
+
+// preencher histórico local
+function loadHistory(){
+  const el = document.getElementById('historyList');
+  const arr = JSON.parse(localStorage.getItem('patanomapa_bookings_confirmed') || '[]');
+  if(arr.length===0){ el.textContent = 'Nenhum pagamento confirmado ainda.'; return; }
+  el.innerHTML = arr.slice(-5).reverse().map(x => `<div style="margin-bottom:6px">• ${escapeHtml(x.tutor||'—')} — ${escapeHtml(x.date||'—')} ${escapeHtml(x.time||'')}</div>`).join('');
+}
+loadHistory();
+
+// botão "Já paguei via PIX" — confirma pagamento
+document.getElementById('pixPaidBtn').addEventListener('click', ()=> {
+  if(!pending){
+    alert('Nenhum agendamento pendente encontrado. Por favor faça um agendamento primeiro.');
+    return;
+  }
+  if(!confirm('Confirma que realizou o pagamento via PIX para a chave ' + PIX_KEY + ' no valor mostrado?')){
+    return;
+  }
+  // marca como pago e salva em confirmed
+  const confirmed = JSON.parse(localStorage.getItem('patanomapa_bookings_confirmed') || '[]');
+  const booking = Object.assign({}, pending, { paid: true, payment_method: 'PIX', payment_reference: PIX_KEY, paid_at: new Date().toISOString() });
+  confirmed.push(booking);
+  localStorage.setItem('patanomapa_bookings_confirmed', JSON.stringify(confirmed));
+  // remove o pending
+  localStorage.removeItem('patanomapa_booking_pending');
+
+  // adiciona breve feedback e redireciona para confirmacao
+  alert('Pagamento confirmado (simulado). Obrigado! Redirecionando para confirmação...');
+  window.location.href = 'confirmacao.html';
+});
+
+// botão cartão (simulado)
+document.getElementById('payCardBtn').addEventListener('click', ()=> {
+  const cardName = document.getElementById('cardName').value.trim();
+  const cardNumber = document.getElementById('cardNumber').value.trim();
+  if(!pending){
+    alert('Nenhum agendamento pendente para pagar. Faça um agendamento primeiro.');
+    return;
+  }
+  if(!cardName || !cardNumber){
+    alert('Preencha os dados do cartão (simulado).');
+    return;
+  }
+  // salvar confirmado
+  const confirmed = JSON.parse(localStorage.getItem('patanomapa_bookings_confirmed') || '[]');
+  const booking = Object.assign({}, pending, { paid: true, payment_method: 'CARTÃO (simulado)', paid_at: new Date().toISOString(), card_holder: cardName });
+  confirmed.push(booking);
+  localStorage.setItem('patanomapa_bookings_confirmed', JSON.stringify(confirmed));
+  localStorage.removeItem('patanomapa_booking_pending');
+  alert('Pagamento com cartão (simulado) realizado com sucesso.');
+  window.location.href = 'confirmacao.html';
+});
+
+// cancelar -> volta ao agendamento
+document.getElementById('cancelBtn').addEventListener('click', ()=> {
+  if(confirm('Cancelar pagamento e voltar ao agendamento?')){
+    window.location.href = 'agendamento.html';
+  }
+});
+
+// ajuda PIX
+document.getElementById('pixHelpBtn').addEventListener('click', ()=> {
+  alert('Para pagar via PIX usando a chave CPF:\n\n1) Abra seu app de banco ou Mercado Pago.\n2) Escolha a opção PIX / Transferência.\n3) Cole a chave (CPF): ' + PIX_KEY + '\n4) Digite o valor mostrado no resumo e confirme.\nDepois clique em "Já paguei via PIX" aqui nesta página.');
+});
+
+// escapeHtml helper
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]) ); }
+
+// se houver pending, rolamos a tela até o resumo
+if(pending) window.scrollTo({ top: 140, behavior: 'smooth' });
+
+</script>
+</body>
+</html>
+

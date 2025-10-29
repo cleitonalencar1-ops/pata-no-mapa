@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Acompanhar no Mapa — Pata no Mapa</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+  :root{
+    --primary:#0f66a8;
+    --bg:#f7f9fb;
+    --card:#fff;
+    --muted:#6b7280;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;margin:0;background:var(--bg);color:#0b1720}
+  .wrap{max-width:1200px;margin:18px auto;padding:16px}
+  .header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .logo{display:flex;gap:12px;align-items:center}
+  .logo img{height:56px;border-radius:8px;object-fit:cover}
+  h1{margin:0;font-size:20px}
+  p.lead{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+  .layout{display:grid;grid-template-columns:360px 1fr;gap:16px;margin-top:12px}
+  @media(max-width:980px){ .layout{grid-template-columns:1fr} }
+
+  .card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 10px 30px rgba(16,24,40,0.06)}
+  .small{font-size:13px;color:var(--muted)}
+
+  #map{width:100%;height:640px;border-radius:8px}
+
+  .btn{display:inline-block;background:var(--primary);color:#fff;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+  .btn.secondary{background:#eef6fb;color:var(--primary);border:1px solid #dbeefb}
+  .controls{display:flex;flex-direction:column;gap:10px}
+  .controls .row{display:flex;gap:8px;align-items:center}
+  input[type="file"]{display:none}
+  .list{max-height:220px;overflow:auto;margin-top:8px;border-radius:8px;border:1px solid #f0f6fb;padding:8px}
+  .stop-item{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px;background:#fbfeff;margin-bottom:6px}
+  .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pill{background:#eef7ff;padding:6px 10px;border-radius:999px;color:var(--primary);font-weight:700}
+  footer{margin-top:14px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="logo">
+        <img src="logotipo-Pata_no_Mapa.jpg" alt="logo"/>
+        <div>
+          <h1>Acompanhar no Mapa</h1>
+          <p class="lead">Veja o percurso e as paradas em tempo real via GPS — simule, carregue GPX ou acompanhe o dispositivo.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- SIDEBAR CONTROLS -->
+      <aside class="card">
+        <div class="controls">
+          <div>
+            <strong>1. Carregar rota (GPX)</strong>
+            <div class="small">Faça upload de um arquivo .gpx para desenhar a rota</div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <label class="btn secondary" id="pickGpxLabel">Selecionar GPX</label>
+              <input id="gpxFile" type="file" accept=".gpx" />
+              <button class="btn" id="clearTrackBtn">Limpar rota</button>
+            </div>
+          </div>
+
+          <hr/>
+
+          <div>
+            <strong>2. Simulação / Reproduzir</strong>
+            <div class="small">Toque para simular "live" movendo o marcador ao longo da rota.</div>
+            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" id="playBtn">▶️ Iniciar simulação</button>
+              <button class="btn secondary" id="pauseBtn">⏸️ Pausar</button>
+              <button class="btn secondary" id="resetSimBtn">↺ Resetar</button>
+            </div>
+            <div style="margin-top:8px" class="small">Velocidade de simulação:
+              <input id="speedRange" type="range" min="0.2" max="5" step="0.1" value="1" style="vertical-align:middle;width:140px;margin-left:8px"/>
+              <span id="speedLabel">1x</span>
+            </div>
+          </div>
+
+          <hr/>
+
+          <div>
+            <strong>3. Live (GPS do navegador)</strong>
+            <div class="small">Permitir que o navegador envie atualizações de posição (se o usuário aceitar).</div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button class="btn" id="startWatchBtn">📡 Start GPS</button>
+              <button class="btn secondary" id="stopWatchBtn">✖️ Stop GPS</button>
+            </div>
+            <div class="small" style="margin-top:8px">Status: <span id="gpsStatus">inativo</span></div>
+          </div>
+
+          <hr/>
+
+          <div>
+            <strong>4. Paradas (stops)</strong>
+            <div class="small">Clique em "Adicionar parada" ou toque no mapa para criar uma parada.</div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button class="btn" id="addStopBtn">➕ Adicionar parada</button>
+              <button class="btn secondary" id="exportStopsBtn">📤 Exportar stops</button>
+            </div>
+            <div class="list" id="stopsList">
+              <div class="small">Nenhuma parada.</div>
+            </div>
+          </div>
+
+          <hr/>
+
+          <div>
+            <strong>5. Dados em tempo real</strong>
+            <div class="small" style="margin-top:8px">Posição atual: <span id="posLabel">—</span></div>
+            <div class="small">Velocidade: <span id="speedLabelNow">—</span></div>
+            <div class="small">Distância percorrida: <span id="distanceLabel">—</span></div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button class="btn" id="exportTrackBtn">⬇️ Exportar JSON</button>
+              <button class="btn secondary" id="fitBtn">🔎 Ajustar visual</button>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- MAP -->
+      <main>
+        <div id="map" class="card"></div>
+      </main>
+    </div>
+
+    <footer>© 2025 Pata no Mapa — Cleiton Alencar</footer>
+  </div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+/* ========== Config e utilitários ========== */
+const centerSP = [-22.54896, -47.91417]; // São Pedro center
+const map = L.map('map', { center: centerSP, zoom: 14 });
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap contributors' }).addTo(map);
+
+function haversine(a,b){
+  const toRad = v => v*Math.PI/180;
+  const R = 6371000;
+  const dLat = toRad(b.lat-a.lat), dLon = toRad(b.lng-a.lng);
+  const lat1 = toRad(a.lat), lat2 = toRad(b.lat);
+  const x = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+  const c = 2*Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+  return R*c;
+}
+
+/* ========== Estado ========== */
+let routePoints = [];      // array {lat,lng, time?}
+let routeLine = null;
+let simulatedMarker = null;
+let simTimer = null;
+let simIndex = 0;
+let simProgress = 0; // interpolation between simIndex and simIndex+1 [0..1]
+let simSpeed = 1; // multiplier
+let watchId = null;
+let livePositions = [];   // positions added from GPS or simulation
+let stops = [];           // array {id,name,lat,lng,marker}
+
+/* ========== Elementos DOM ========== */
+const gpxFile = document.getElementById('gpxFile');
+const pickGpxLabel = document.getElementById('pickGpxLabel');
+const clearTrackBtn = document.getElementById('clearTrackBtn');
+const playBtn = document.getElementById('playBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetSimBtn = document.getElementById('resetSimBtn');
+const speedRange = document.getElementById('speedRange');
+const speedLabel = document.getElementById('speedLabel');
+const startWatchBtn = document.getElementById('startWatchBtn');
+const stopWatchBtn = document.getElementById('stopWatchBtn');
+const gpsStatus = document.getElementById('gpsStatus');
+const addStopBtn = document.getElementById('addStopBtn');
+const stopsList = document.getElementById('stopsList');
+const exportStopsBtn = document.getElementById('exportStopsBtn');
+const posLabel = document.getElementById('posLabel');
+const speedLabelNow = document.getElementById('speedLabelNow');
+const distanceLabel = document.getElementById('distanceLabel');
+const exportTrackBtn = document.getElementById('exportTrackBtn');
+const fitBtn = document.getElementById('fitBtn');
+
+/* ========== Funções de GPX parsing (simples) ========== */
+function parseGpxText(xmlText){
+  try {
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(xmlText, "application/xml");
+    const trkpts = xml.querySelectorAll('trkpt');
+    if(trkpts.length>0){
+      const arr = [];
+      trkpts.forEach(n=>{
+        const lat = parseFloat(n.getAttribute('lat')), lng = parseFloat(n.getAttribute('lon'));
+        const timeEl = n.querySelector('time');
+        const time = timeEl ? new Date(timeEl.textContent).toISOString() : null;
+        if(!isNaN(lat) && !isNaN(lng)) arr.push({lat,lng, time});
+      });
+      return arr;
+    }
+    const rtepts = xml.querySelectorAll('rtept');
+    if(rtepts.length>0){
+      const arr = [];
+      rtepts.forEach(n=>{
+        const lat = parseFloat(n.getAttribute('lat')), lng = parseFloat(n.getAttribute('lon'));
+        if(!isNaN(lat) && !isNaN(lng)) arr.push({lat,lng});
+      });
+      return arr;
+    }
+  } catch(e){ console.warn('GPX parse error', e); }
+  return [];
+}
+
+/* ========== Render rota no mapa ========== */
+function drawRoute(){
+  if(routeLine) map.removeLayer(routeLine);
+  if(routePoints.length===0) return;
+  routeLine = L.polyline(routePoints.map(p=>[p.lat,p.lng]), { color:'#0f66a8', weight:4, opacity:0.9 }).addTo(map);
+}
+
+/* ========== Atualizar info UI ========== */
+function updateLiveInfo(){
+  const last = livePositions[livePositions.length-1];
+  posLabel.textContent = last ? `${last.lat.toFixed(6)}, ${last.lng.toFixed(6)}` : '—';
+  if(last && last.speed != null){ speedLabelNow.textContent = (last.speed*3.6).toFixed(1) + ' km/h'; } // m/s -> km/h
+  const dist = computeDistance(livePositions);
+  distanceLabel.textContent = dist>0 ? formatDistance(dist) : '—';
+}
+
+function computeDistance(arr){
+  if(!arr || arr.length<2) return 0;
+  let s = 0;
+  for(let i=1;i<arr.length;i++) s += haversine(arr[i-1], arr[i]);
+  return s;
+}
+function formatDistance(m){
+  if(m<1000) return Math.round(m)+' m';
+  return (m/1000).toFixed(2)+' km';
+}
+
+/* ========== Simulação ========== */
+function startSimulation(){
+  if(routePoints.length<2){ alert('Carregue uma rota GPX com pontos para simular.'); return; }
+  if(simTimer) return;
+  if(!simulatedMarker){
+    simulatedMarker = L.marker([routePoints[0].lat, routePoints[0].lng], {icon: L.icon({iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-red.png', iconSize:[25,41], iconAnchor:[12,41]})}).addTo(map);
+  }
+  simTimer = setInterval(simStep, 100); // 10fps approx
+  playBtn.disabled = true;
+  pauseBtn.disabled = false;
+}
+
+function simStep(){
+  // speedRange is multiplier; base step distance depends on index spacing; we implement time interpolation
+  const s = simSpeed;
+  // ensure simIndex inside
+  if(simIndex >= routePoints.length-1){
+    // end of line
+    stopSimulation();
+    return;
+  }
+  const A = routePoints[simIndex];
+  const B = routePoints[simIndex+1];
+  // if both have time, we can use timestamps; otherwise use fixed step based on s
+  let dt = 0.1 * s; // progress increment per tick
+  if(A.time && B.time){
+    // compute real duration in seconds
+    const tA = new Date(A.time).getTime()/1000;
+    const tB = new Date(B.time).getTime()/1000;
+    const duration = Math.max(1, tB - tA);
+    dt = (0.1 * s) / duration;
+  }
+  simProgress += dt;
+  if(simProgress >= 1){
+    simIndex++; simProgress = 0;
+  }
+  const interp = simProgress;
+  const lat = A.lat + (B.lat - A.lat)*interp;
+  const lng = A.lng + (B.lng - A.lng)*interp;
+  const nowPos = {lat,lng};
+  // animate marker
+  simulatedMarker.setLatLng([lat,lng]);
+  // record livePositions for distance calculation
+  livePositions.push({lat,lng, time: new Date().toISOString(), source:'simulation'});
+  // update UI and map center
+  updateLiveInfo();
+}
+
+function pauseSimulation(){
+  if(simTimer){ clearInterval(simTimer); simTimer = null; playBtn.disabled=false; pauseBtn.disabled=true; }
+}
+
+function stopSimulation(){ pauseSimulation(); simIndex = 0; simProgress = 0; if(simulatedMarker){ simulatedMarker.remove(); simulatedMarker=null; } playBtn.disabled=false; pauseBtn.disabled=true; }
+
+/* ========== WatchPosition (GPS do navegador) ========== */
+function startWatch(){
+  if(!('geolocation' in navigator)){ alert('Geolocalização não disponível no navegador.'); return; }
+  if(watchId) return;
+  gpsStatus.textContent = 'aguardando...';
+  watchId = navigator.geolocation.watchPosition(
+    pos=>{
+      const lat = pos.coords.latitude, lng = pos.coords.longitude, speed = pos.coords.speed || null;
+      livePositions.push({lat,lng, time: new Date().toISOString(), source:'gps', speed});
+      // draw / update moving marker
+      if(!simulatedMarker){
+        simulatedMarker = L.marker([lat,lng], {icon: L.icon({iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-green.png', iconSize:[25,41], iconAnchor:[12,41]})}).addTo(map);
+      } else {
+        simulatedMarker.setLatLng([lat,lng]);
+      }
+      // center map slightly
+      map.setView([lat,lng]);
+      gpsStatus.textContent = 'ativo';
+      updateLiveInfo();
+    },
+    err => {
+      console.warn('watchPosition error', err);
+      gpsStatus.textContent = 'erro';
+      alert('Erro na geolocalização: ' + (err.message || err.code));
+    },
+    { enableHighAccuracy:true, maximumAge:1000, timeout:10000 }
+  );
+}
+
+function stopWatch(){
+  if(!watchId) return;
+  navigator.geolocation.clearWatch(watchId);
+  watchId = null;
+  gpsStatus.textContent = 'inativo';
+}
+
+/* ========== Paradas (stops) ========== */
+let addingStopMode = false;
+addStopBtn.addEventListener('click', ()=>{
+  addingStopMode = !addingStopMode;
+  addStopBtn.textContent = addingStopMode ? '✅ Clique no mapa para adicionar' : '➕ Adicionar parada';
+  addStopBtn.classList.toggle('btn', !addingStopMode);
+});
+
+/* mapa click handler for adding stop */
+map.on('click', (e)=>{
+  if(addingStopMode){
+    const id = Date.now();
+    const name = prompt('Nome da parada (ex: Praça X)') || ('Parada ' + (stops.length+1));
+    const s = { id, name, lat: e.latlng.lat, lng: e.latlng.lng };
+    const marker = L.marker([s.lat, s.lng], {title: s.name}).addTo(map);
+    marker.bindPopup(`<strong>${s.name}</strong><br>(${s.lat.toFixed(6)}, ${s.lng.toFixed(6)})`);
+    s.marker = marker;
+    stops.push(s);
+    renderStops();
+    addingStopMode = false;
+    addStopBtn.textContent = '➕ Adicionar parada';
+  }
+});
+
+/* render stops list */
+function renderStops(){
+  if(stops.length===0) { stopsList.innerHTML = '<div class="small">Nenhuma parada.</div>'; return; }
+  stopsList.innerHTML = '';
+  stops.forEach(s=>{
+    const div = document.createElement('div'); div.className='stop-item';
+    div.innerHTML = `<div><strong>${s.name}</strong><div class="small">${s.lat.toFixed(6)}, ${s.lng.toFixed(6)}</div></div>
+      <div style="display:flex;gap:6px"><button class="btn secondary" data-id="${s.id}" data-action="center">🔎</button><button class="btn" data-id="${s.id}" data-action="del">🗑️</button></div>`;
+    stopsList.appendChild(div);
+  });
+  // attach events
+  stopsList.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=> {
+      const id = Number(btn.dataset.id);
+      const action = btn.dataset.action;
+      const s = stops.find(x=>x.id===id);
+      if(!s) return;
+      if(action==='center'){ map.setView([s.lat,s.lng], 16); if(s.marker) s.marker.openPopup(); }
+      if(action==='del'){ if(s.marker) map.removeLayer(s.marker); stops = stops.filter(x=>x.id!==id); renderStops(); }
+    });
+  });
+}
+
+/* export stops */
+exportStopsBtn.addEventListener('click', ()=>{
+  if(stops.length===0){ alert('Nenhuma parada para exportar.'); return; }
+  const payload = { city:'São Pedro', created_at: new Date().toISOString(), stops: stops.map(s=>({name:s.name, lat:s.lat, lng:s.lng})) };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'paradas.json'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+/* ========== Upload GPX handlers ========== */
+pickGpxLabel.addEventListener('click', ()=> gpxFile.click());
+gpxFile.addEventListener('change', async (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const text = await f.text();
+  const pts = parseGpxText(text);
+  if(pts.length===0){ alert('GPX carregado, mas não foi possível extrair pontos (trkpt/rtept).'); return; }
+  routePoints = pts.map(p=>({lat:p.lat, lng:p.lng, time: p.time || null}));
+  drawRoute();
+  map.fitBounds(L.polyline(routePoints.map(p=>[p.lat,p.lng])).getBounds().pad(0.2));
+  // reset simulation
+  stopSimulation();
+  livePositions = []; // clear previous
+  // optionally seed livePositions with route start
+  livePositions.push({lat: routePoints[0].lat, lng: routePoints[0].lng, time: new Date().toISOString(), source:'gpx-seed'});
+  updateLiveInfo();
+});
+
+/* clear track */
+clearTrackBtn.addEventListener('click', ()=>{
+  if(routeLine){ map.removeLayer(routeLine); routeLine = null; }
+  routePoints = [];
+  stopSimulation();
+  livePositions = [];
+  if(simulatedMarker){ simulatedMarker.remove(); simulatedMarker = null; }
+  updateLiveInfo();
+});
+
+/* ========== Simulation controls ========== */
+playBtn.addEventListener('click', ()=> {
+  simSpeed = Number(speedRange.value);
+  startSimulation();
+});
+pauseBtn.addEventListener('click', ()=> pauseSimulation());
+resetSimBtn.addEventListener('click', ()=> stopSimulation());
+speedRange.addEventListener('input', ()=> { speedLabel.textContent = speedRange.value + 'x'; simSpeed = Number(speedRange.value); });
+
+/* ========== GPS watch controls ========== */
+startWatchBtn.addEventListener('click', ()=> startWatch());
+stopWatchBtn.addEventListener('click', ()=> stopWatch());
+
+/* ========== Export track & fit ========== */
+exportTrackBtn.addEventListener('click', ()=>{
+  if(livePositions.length===0){ alert('Sem posições registradas.'); return; }
+  const payload = { city:'São Pedro', created_at:new Date().toISOString(), positions: livePositions };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'track_live.json'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+
+fitBtn.addEventListener('click', ()=>{
+  const layers = [];
+  if(routeLine) layers.push(routeLine);
+  stops.forEach(s=> { if(s.marker) layers.push(s.marker); });
+  if(simulatedMarker) layers.push(simulatedMarker);
+  if(layers.length===0){ map.setView(centerSP,14); return; }
+  const group = L.featureGroup(layers);
+  map.fitBounds(group.getBounds().pad(0.2));
+});
+
+/* ========== Helpers / init ========== */
+function stopSimulation(){
+  if(simTimer){ clearInterval(simTimer); simTimer=null; }
+  simIndex = 0; simProgress = 0;
+  if(simulatedMarker){ simulatedMarker.remove(); simulatedMarker=null; }
+  playBtn.disabled = false; pauseBtn.disabled = true;
+}
+function pauseSimulation(){
+  if(simTimer){ clearInterval(simTimer); simTimer=null; }
+  playBtn.disabled = false; pauseBtn.disabled = true;
+}
+function startSimulation(){
+  if(routePoints.length<2){ alert('Carregue uma rota GPX com pontos para simular.'); return; }
+  if(simTimer) return;
+  simIndex = 0; simProgress = 0;
+  if(!simulatedMarker){
+    simulatedMarker = L.marker([routePoints[0].lat, routePoints[0].lng], {icon: L.icon({iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-red.png', iconSize:[25,41], iconAnchor:[12,41]})}).addTo(map);
+  }
+  simTimer = setInterval(()=> {
+    // advance along route with speed multiplier
+    const s = simSpeed;
+    if(simIndex >= routePoints.length-1){ stopSimulation(); return; }
+    const A = routePoints[simIndex], B = routePoints[simIndex+1];
+    // compute segment length (m)
+    const segLen = haversine(A,B);
+    // decide step size in meters per tick: base 2 m/tick * s
+    const base_step_m = 2 * s;
+    // compute fraction to advance
+    const frac = Math.min(1, base_step_m / Math.max(1, segLen));
+    simProgress += frac;
+    if(simProgress >= 1){
+      simIndex++; simProgress = 0;
+    }
+    const lat = A.lat + (B.lat - A.lat) * simProgress;
+    const lng = A.lng + (B.lng - A.lng) * simProgress;
+    simulatedMarker.setLatLng([lat,lng]);
+    livePositions.push({lat,lng, time: new Date().toISOString(), source:'simulation'});
+    updateLiveInfo();
+  }, 120); // tick ~120ms
+  playBtn.disabled = true; pauseBtn.disabled = false;
+}
+
+/* init UI */
+pauseBtn.disabled = true;
+speedLabel.textContent = speedRange.value + 'x';
+updateLiveInfo();
+
+/* keyboard accessibility: stop watch on esc */
+document.addEventListener('keydown', (e)=> {
+  if(e.key === 'Escape'){ stopWatch(); pauseSimulation(); }
+});
+</script>
+</body>
+</html>

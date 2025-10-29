@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Agendamento — Pata no Mapa</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+  :root{
+    --primary:#0f66a8;
+    --accent:#ff7a59;
+    --bg:#f6f8fb;
+    --card:#ffffff;
+    --muted:#6b7280;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:#0f1724;background:var(--bg)}
+  .wrap{max-width:1100px;margin:28px auto;padding:16px}
+  .hero{
+    display:grid;grid-template-columns:420px 1fr;gap:18px;align-items:stretch;margin-bottom:18px;
+  }
+  @media(max-width:920px){ .hero{grid-template-columns:1fr} }
+
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 30px rgba(16,24,40,0.06);padding:18px}
+  .hero .card img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+  h1{margin:0 0 6px 0;font-size:22px}
+  p.lead{margin:0;color:var(--muted)}
+  form{display:grid;gap:10px}
+  label{font-weight:700;font-size:13px;margin-top:8px}
+  input[type="text"], input[type="tel"], input[type="date"], input[type="time"], select, textarea{
+    width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;background:#fff;font-size:14px;
+  }
+  textarea{min-height:84px;resize:vertical}
+  .row{display:flex;gap:10px}
+  .row .col{flex:1}
+  .btn{background:var(--primary);color:#fff;padding:10px 14px;border-radius:10px;border:0;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--primary);border:1px solid #dceefc}
+  .small{font-size:13px;color:var(--muted)}
+  #map{height:220px;border-radius:8px;margin-top:8px}
+  .controls{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .confirmation{margin-top:12px;padding:12px;border-radius:8px;background:#fbfdff;border:1px solid #e9f3ff}
+  .meta{display:flex;gap:10px;flex-wrap:wrap}
+  .pill{background:#eef7ff;padding:6px 10px;border-radius:999px;color:var(--primary);font-weight:700}
+  /* modal */
+  .modal-back{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center;z-index:40}
+  .modal{background:#fff;padding:18px;border-radius:12px;max-width:720px;width:96%;box-shadow:0 30px 60px rgba(2,6,23,0.25)}
+  .modal h3{margin:0 0 6px 0}
+  .modal .row{margin-top:8px}
+  .download-json{background:#0b845f;padding:8px 12px;border-radius:8px;color:#fff;border:0;cursor:pointer}
+  footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="hero">
+      <!-- Image card -->
+      <div class="card" aria-hidden="false">
+        <!-- image from Unsplash (dog walking) -->
+        <img src="https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&w=1400&q=80&fit=crop" alt="Passeio de cachorro ao ar livre">
+      </div>
+
+      <!-- Form card -->
+      <div class="card" role="region" aria-labelledby="agendeTitulo">
+        <h1 id="agendeTitulo">Agende o Passeio</h1>
+        <p class="lead">Escolha o melhor dia e horário diretamente pelo site. Informe os dados do tutor e do pet, marque o ponto de encontro no mapa e confirme.</p>
+
+        <form id="bookingForm" autocomplete="off" novalidate>
+          <label for="tutorName">Nome do tutor</label>
+          <input id="tutorName" type="text" placeholder="Ex: Carla Silva" required>
+
+          <div class="row">
+            <div class="col">
+              <label for="phone">Telefone / WhatsApp</label>
+              <input id="phone" type="tel" placeholder="(xx) 9xxxx-xxxx" required>
+            </div>
+            <div class="col">
+              <label for="petName">Nome do pet</label>
+              <input id="petName" type="text" placeholder="Ex: Thor" required>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label for="date">Data</label>
+              <input id="date" type="date" required>
+            </div>
+            <div class="col">
+              <label for="time">Horário</label>
+              <input id="time" type="time" required>
+            </div>
+            <div class="col">
+              <label for="duration">Duração</label>
+              <select id="duration" required>
+                <option value="30">30 min</option>
+                <option value="45">45 min</option>
+                <option value="60" selected>60 min</option>
+                <option value="90">90 min</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="bairro">Bairro</label>
+          <select id="bairro" required>
+            <option value="">— selecione —</option>
+            <option>Vila Nova</option>
+            <option>Botânico I</option>
+            <option>Botânico II</option>
+            <option>Mariluz</option>
+            <option>Centro</option>
+            <option>Outro</option>
+          </select>
+
+          <label for="notes">Observações (porta, coleira, restrições)</label>
+          <textarea id="notes" placeholder="Ex: Entrar pelos fundos, usa coleira azul..."></textarea>
+
+          <label>Ponto de encontro (arraste o marcador para ajustar)</label>
+          <div id="map" aria-hidden="false"></div>
+          <div class="small">Arraste o marcador para marcar onde você prefere encontrar o passeador. Coordenadas serão salvas no agendamento.</div>
+
+          <div class="controls">
+            <button type="button" class="btn" id="confirmBtn">Confirmar Agendamento</button>
+            <button type="button" class="btn ghost" id="saveLocalBtn">Salvar localmente</button>
+            <div style="margin-left:auto" class="small">Horários disponíveis: 06:00 — 20:00</div>
+          </div>
+
+          <div id="feedback" class="confirmation" role="status" style="display:none"></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta" style="align-items:center;justify-content:space-between">
+        <div>
+          <strong>Resumo rápido</strong>
+          <div class="small">Veja abaixo os dados antes de confirmar</div>
+        </div>
+        <div class="pill" id="summaryDistance">—</div>
+      </div>
+
+      <div style="margin-top:12px" id="summaryBox">
+        <p class="small">Nenhum agendamento informado ainda.</p>
+      </div>
+    </div>
+
+    <footer>© 2025 Pata no Mapa — Projeto acadêmico de Cleiton Alencar</footer>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-back" id="modalBack" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <h3>Confirmar agendamento</h3>
+      <div id="modalContent" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="modalConfirm" class="btn">Confirmar e Baixar JSON</button>
+        <button id="modalClose" class="btn ghost">Voltar</button>
+        <button id="modalSave" class="download-json" style="margin-left:auto">Salvar no dispositivo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <script>
+  // --- Configuração inicial ---
+  const centerSP = [-22.54896, -47.91417]; // São Pedro centro
+  const map = L.map('map', {center: centerSP, zoom: 14, zoomControl: true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // marcador inicial (draggable)
+  let marker = L.marker(centerSP, {draggable:true, title:'Ponto de encontro'}).addTo(map);
+  marker.bindPopup('Arraste para ajustar o ponto de encontro').openPopup();
+
+  // DOM
+  const dateEl = document.getElementById('date');
+  const timeEl = document.getElementById('time');
+  const tutorEl = document.getElementById('tutorName');
+  const phoneEl = document.getElementById('phone');
+  const petEl = document.getElementById('petName');
+  const durationEl = document.getElementById('duration');
+  const bairroEl = document.getElementById('bairro');
+  const notesEl = document.getElementById('notes');
+  const confirmBtn = document.getElementById('confirmBtn');
+  const saveLocalBtn = document.getElementById('saveLocalBtn');
+  const feedbackEl = document.getElementById('feedback');
+  const summaryBox = document.getElementById('summaryBox');
+  const summaryDistance = document.getElementById('summaryDistance');
+
+  // Modal
+  const modalBack = document.getElementById('modalBack');
+  const modalContent = document.getElementById('modalContent');
+  const modalClose = document.getElementById('modalClose');
+  const modalConfirm = document.getElementById('modalConfirm');
+  const modalSave = document.getElementById('modalSave');
+
+  // Preenche data mínima = hoje
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  dateEl.min = `${yyyy}-${mm}-${dd}`;
+
+  // validações
+  function validateForm(){
+    const name = tutorEl.value.trim();
+    const phone = phoneEl.value.trim();
+    const pet = petEl.value.trim();
+    const date = dateEl.value;
+    const time = timeEl.value;
+    const bairro = bairroEl.value;
+    if(!name || !phone || !pet || !date || !time || !bairro) return {ok:false, msg:'Preencha todos os campos obrigatórios.'};
+
+    // data/hora não anterior a agora (para hoje)
+    const selected = new Date(date + 'T' + time);
+    if(selected < new Date()){
+      return {ok:false, msg:'A data/hora selecionada é anterior ao momento atual.'};
+    }
+    // horário entre 06:00 e 20:00
+    const [hh,mm2] = time.split(':').map(Number);
+    const minutesOfDay = hh*60 + mm2;
+    if(minutesOfDay < 6*60 || minutesOfDay > 20*60){
+      return {ok:false, msg:'Horário disponível entre 06:00 e 20:00.'};
+    }
+    return {ok:true};
+  }
+
+  function buildBookingObject(){
+    const {lat,lng} = marker.getLatLng();
+    const booking = {
+      tutor: tutorEl.value.trim(),
+      phone: phoneEl.value.trim(),
+      pet: petEl.value.trim(),
+      date: dateEl.value,
+      time: timeEl.value,
+      duration_min: Number(durationEl.value),
+      bairro: bairroEl.value,
+      notes: notesEl.value.trim(),
+      meeting_point: { lat: Number(lat.toFixed(7)), lng: Number(lng.toFixed(7)) },
+      created_at: new Date().toISOString(),
+      city: "São Pedro"
+    };
+    return booking;
+  }
+
+  function renderSummary(){
+    const b = buildBookingObject();
+    summaryBox.innerHTML = `
+      <div style="display:flex;gap:12px;align-items:center">
+        <div style="flex:1">
+          <div style="font-weight:700">${b.tutor} — ${b.pet}</div>
+          <div class="small">${b.date} • ${b.time} • ${b.duration_min} min</div>
+          <div class="small">Bairro: <strong>${b.bairro}</strong></div>
+          <div style="margin-top:8px" class="small">${b.notes || '—'}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="small">Ponto (lat,lng)</div>
+          <div style="font-weight:700">${b.meeting_point.lat}, ${b.meeting_point.lng}</div>
+        </div>
+      </div>
+    `;
+    summaryDistance.textContent = `${b.duration_min} min`;
+  }
+
+  // atualiza summary quando campos mudam ou marcador é movido
+  ['change','input'].forEach(ev => {
+    [tutorEl, phoneEl, petEl, dateEl, timeEl, durationEl, bairroEl, notesEl].forEach(el=>{
+      el.addEventListener(ev, () => renderSummary());
+    });
+  });
+  marker.on('dragend', () => renderSummary());
+  // initial
+  renderSummary();
+
+  // ações
+  confirmBtn.addEventListener('click', ()=>{
+    const v = validateForm();
+    if(!v.ok){
+      feedbackEl.style.display='block';
+      feedbackEl.textContent = v.msg;
+      feedbackEl.style.borderColor = '#ffd7d7';
+      feedbackEl.style.background = '#fff6f6';
+      feedbackEl.style.color = '#8b1f1f';
+      return;
+    }
+    feedbackEl.style.display='none';
+    // abrir modal com resumo e opção de download
+    const booking = buildBookingObject();
+    modalContent.innerHTML = `
+      <div style="font-size:15px">
+        <strong>${booking.tutor}</strong> — ${booking.pet}<br>
+        <span class="small">${booking.date} • ${booking.time} • ${booking.duration_min} min</span>
+        <div style="margin-top:8px" class="small">Bairro: <strong>${booking.bairro}</strong></div>
+        <div style="margin-top:8px">${booking.notes || '<span class="small">Sem observações</span>'}</div>
+        <hr style="margin:10px 0">
+        <div class="small">Ponto de encontro: ${booking.meeting_point.lat}, ${booking.meeting_point.lng}</div>
+      </div>
+    `;
+    modalBack.style.display = 'flex';
+    modalBack.setAttribute('aria-hidden','false');
+  });
+
+  modalClose.addEventListener('click', ()=> {
+    modalBack.style.display='none';
+    modalBack.setAttribute('aria-hidden','true');
+  });
+
+  // confirmar e baixar JSON
+  modalConfirm.addEventListener('click', ()=> {
+    const booking = buildBookingObject();
+    const filename = `agendamento_${booking.tutor.replace(/\s+/g,'_')}_${booking.date}.json`;
+    const blob = new Blob([JSON.stringify(booking,null,2)], {type:'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showSavedMessage('Agendamento confirmado e arquivo JSON baixado.');
+    modalBack.style.display='none';
+    modalBack.setAttribute('aria-hidden','true');
+  });
+
+  // salvar no dispositivo (mesma função)
+  modalSave.addEventListener('click', ()=> {
+    const booking = buildBookingObject();
+    const filename = `agendamento_${booking.tutor.replace(/\s+/g,'_')}_${booking.date}.json`;
+    const blob = new Blob([JSON.stringify(booking,null,2)], {type:'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showSavedMessage('Arquivo salvo no dispositivo.');
+    modalBack.style.display='none';
+    modalBack.setAttribute('aria-hidden','true');
+  });
+
+  // salvar localmente em localStorage
+  saveLocalBtn.addEventListener('click', ()=>{
+    const v = validateForm();
+    if(!v.ok){ showSavedMessage(v.msg, true); return; }
+    const booking = buildBookingObject();
+    const list = JSON.parse(localStorage.getItem('patanomapa_bookings') || '[]');
+    list.push(booking);
+    localStorage.setItem('patanomapa_bookings', JSON.stringify(list));
+    showSavedMessage('Agendamento salvo localmente no navegador.');
+  });
+
+  function showSavedMessage(msg, isError=false){
+    feedbackEl.style.display='block';
+    feedbackEl.textContent = msg;
+    feedbackEl.style.borderColor = isError ? '#ffd7d7' : '#d4f7df';
+    feedbackEl.style.background = isError ? '#fff6f6' : '#f4fffa';
+    feedbackEl.style.color = isError ? '#8b1f1f' : '#075a2c';
+    setTimeout(()=> feedbackEl.style.display='none', 6000);
+  }
+
+  // keyboard accessibility: close modal with Esc
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && modalBack.style.display==='flex') modalClose.click();
+  });
+
+  // center map on click location (helpful on mobile)
+  map.on('click', function(e){
+    marker.setLatLng(e.latlng);
+    renderSummary();
+  });
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pata no Mapa | Passeios Inteligentes para Pets</title>
+  <meta name="description"
+    content="Passeios mapeados com carinho e tecnologia em Águas de São Pedro. Agende e acompanhe o trajeto do seu pet em tempo real." />
+
+  <!-- Leaflet (mantido para o caso do conteúdo inicial precisar) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script defer src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* estilos principais (mantidos/adaptados) */
+    body { font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin: 0; color: #0b1720; background: #fff; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+    header { background: #fff; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 30; }
+    .header-content { display:flex; align-items:center; gap:16px; padding:12px 0; }
+    .logo { display:flex; align-items:center; gap:10px; }
+    .logo img { height:48px; object-fit:contain; }
+    nav ul { display:flex; gap:12px; list-style:none; margin:0; padding:0; }
+    nav a { text-decoration:none; color:#0b1720; font-weight:600; padding:8px 10px; border-radius:8px; }
+    nav a:hover { background:#f2f8ff; }
+
+    .btn-agendar { margin-left:auto; background:#0f66a8; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:700; }
+    .hero { display:flex; gap:20px; align-items:center; padding:28px 0; }
+    .hero-text { max-width:640px; }
+    .hero-img img { width:320px; border-radius:10px; object-fit:cover; }
+    .steps, .benefits, .testimonials, .contact, footer { padding:18px 0; }
+    .steps-container { display:flex; gap:12px; }
+    .map-section { padding: 18px 0; background: #f9f9f9; text-align:center; border-top:1px solid #eee; border-bottom:1px solid #eee; }
+    #map { width:100%; height:420px; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.06); }
+    .footer-container { display:flex; gap:24px; align-items:flex-start; justify-content:space-between; padding:18px 0; }
+    .footer-links a { display:block; color:#0b1720; text-decoration:none; margin-bottom:6px; }
+    /* content loader area */
+    #pageContent { padding:18px 0; min-height:360px; }
+
+    /* loader */
+    .loading { opacity: 0.6; pointer-events: none; }
+    .sr-only { position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
+
+    @media (max-width: 900px) {
+      .hero { flex-direction: column; }
+      .hero-img img { width:100%; max-width:360px; }
+      nav ul { flex-wrap:wrap; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 🌐 HEADER -->
+  <header>
+    <div class="container header-content">
+      <div class="logo">
+        <img src="logotipo-Pata_no_Mapa.jpg" alt="Logo Pata no Mapa" />
+        <h1 style="margin:0;font-size:18px">Pata no Mapa</h1>
+      </div>
+
+      <nav aria-label="Navegação principal">
+        <ul>
+          <!-- agora esses links acionam o carregador interno -->
+          <li><a href="index.html" data-internal>Início</a></li>
+          <li><a href="agendamento.html" data-internal>Agendar</a></li>
+          <li><a href="acompanhar-mapa.html" data-internal>Acompanhar</a></li>
+          <li><a href="avaliar-compartilhar.html" data-internal>Avaliar</a></li>
+          <li><a href="contato.html" data-internal>Contato</a></li>
+        </ul>
+      </nav>
+
+      <a href="agendamento.html" class="btn-agendar" data-internal>Agendar Agora</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- HERO (conteúdo inicial estático) -->
+    <section id="inicio" class="hero" aria-labelledby="heroTitle">
+      <div class="hero-text">
+        <h2 id="heroTitle">Passeios mapeados com carinho e tecnologia</h2>
+        <p>
+          Agende e acompanhe o trajeto do seu pet em tempo real. Serviço sustentável e local em São Pedro e Águas de São Pedro.
+        </p>
+        <a href="agendamento.html" class="btn-primary" data-internal style="display:inline-block;margin-top:8px;background:#0f66a8;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none;font-weight:700">Começar Agora</a>
+      </div>
+      <div class="hero-img" aria-hidden="false">
+        <img src="Pata_no_Mapa.jpg" alt="Cachorro feliz em passeio" />
+      </div>
+    </section>
+
+    <!-- funcionalidade: área onde serão carregadas as páginas internas -->
+    <div id="pageContent" role="region" aria-live="polite">
+      <!-- Conteúdo inicial: mapa compacto + resumo -->
+      <section id="homeSummary">
+        <!-- 🗺️ MAPA INTERATIVO (inicial) -->
+        <section id="mapa" class="map-section" aria-labelledby="mapaTitle">
+          <h3 id="mapaTitle">Mapa dos Passeios — São Pedro (SP)</h3>
+          <p>Confira as rotas e bairros onde os passeios acontecem 🐾</p>
+          <div id="map"></div>
+        </section>
+
+        <section class="steps" aria-labelledby="howTitle">
+          <h3 id="howTitle">Como Funciona</h3>
+          <div class="steps-container" style="margin-top:12px;">
+            <div class="step" style="flex:1;padding:12px;background:#fff;border-radius:8px;box-shadow:0 8px 20px rgba(12,30,50,0.04)">
+              <img src="icon1.png" alt="Agendamento" style="height:36px;display:block;margin-bottom:8px" />
+              <h4>1. Agende o Passeio</h4>
+              <p>Escolha o melhor dia e horário diretamente pelo site.</p>
+            </div>
+            <div class="step" style="flex:1;padding:12px;background:#fff;border-radius:8px;box-shadow:0 8px 20px rgba(12,30,50,0.04)">
+              <img src="icon2.png" alt="Acompanhar no mapa" style="height:36px;display:block;margin-bottom:8px" />
+              <h4>2. Acompanhe no Mapa</h4>
+              <p>Veja o percurso e as paradas em tempo real via GPS.</p>
+            </div>
+            <div class="step" style="flex:1;padding:12px;background:#fff;border-radius:8px;box-shadow:0 8px 20px rgba(12,30,50,0.04)">
+              <img src="icon3.png" alt="Avaliar e compartilhar" style="height:36px;display:block;margin-bottom:8px" />
+              <h4>3. Avalie e Compartilhe</h4>
+              <p>Receba o relatório com fotos e distância percorrida.</p>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+
+    <!-- RODAPÉ -->
+    <footer>
+      <div class="footer-container">
+        <div class="footer-info">
+          <h4>Pata no Mapa</h4>
+          <p>Cuidando de pets com tecnologia e amor em Águas de São Pedro.</p>
+        </div>
+        <div class="footer-links" aria-hidden="false">
+          <a href="index.html" data-internal>Início</a>
+          <a href="agendamento.html" data-internal>Agendar</a>
+          <a href="acompanhar-mapa.html" data-internal>Acompanhar</a>
+          <a href="avaliar-compartilhar.html" data-internal>Avaliar</a>
+          <a href="contato.html" data-internal>Contato</a>
+        </div>
+        <div class="footer-copy">
+          <p>© 2025 Pata no Mapa — Projeto acadêmico de Cleiton Alencar • Curso de Geotecnologias e SIG</p>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Carregador de páginas internas e script do mapa -->
+  <script>
+    // ----------------------------
+    // Helper: carregar uma página (fetch) e injetar no #pageContent
+    // - executa scripts presentes no HTML carregado
+    // - atualiza o histórico (pushState)
+    // ----------------------------
+    async function loadPage(url, push = true) {
+      const container = document.getElementById('pageContent');
+      container.classList.add('loading');
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Falha ao carregar: ' + res.status);
+        const text = await res.text();
+
+        // simples extração do <body> do HTML carregado (se existir) para evitar duplicar <head>
+        let bodyHtml = text;
+        const bodyMatch = text.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        if (bodyMatch) bodyHtml = bodyMatch[1];
+
+        container.innerHTML = bodyHtml;
+
+        // executar scripts do conteúdo carregado
+        // pega todos os scripts no HTML carregado, recria e insere para executar
+        const tmp = document.createElement('div');
+        tmp.innerHTML = bodyHtml;
+        const scripts = tmp.querySelectorAll('script');
+        scripts.forEach((old) => {
+          const s = document.createElement('script');
+          // conserva tipo e src. Se script for inline, copia o texto.
+          if (old.src) {
+            s.src = old.src;
+            s.async = false;
+          } else {
+            s.textContent = old.textContent;
+          }
+          document.body.appendChild(s);
+          // remove o elemento script criado após execução (limpeza)
+          s.addEventListener('load', () => setTimeout(() => s.remove(), 50));
+        });
+
+        // atualizar o título da página (se o HTML carregado tiver <title>)
+        const titleMatch = text.match(/<title>([^<]+)<\/title>/i);
+        if (titleMatch) document.title = titleMatch[1] + ' — Pata no Mapa';
+
+        // opcional: empurra histórico para navegação back/forward
+        if (push) history.pushState({ url }, '', url);
+
+        // rolar para o topo do conteúdo
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<div style="padding:24px;background:#fff;border-radius:8px"><strong>Erro ao carregar a página.</strong><p class="small">${err.message}</p></div>`;
+      } finally {
+        container.classList.remove('loading');
+      }
+    }
+
+    // intercepta cliques em links com data-internal e usa loadPage
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[data-internal]');
+      if (!a) return;
+      const href = a.getAttribute('href');
+      if (!href) return;
+      e.preventDefault();
+      // se for link para index.html ou "Início", recarrega conteúdo inicial
+      if (href === 'index.html' || href === '#' || href === window.location.pathname.split('/').pop()) {
+        // restaura conteúdo inicial: recarrega a página para garantir mapa inicial
+        // alternativa: podemos criar um função para restaurar o home sem reload
+        window.location.href = 'index.html';
+        return;
+      }
+      loadPage(href);
+    });
+
+    // suporta navegação via back/forward
+    window.addEventListener('popstate', (e) => {
+      const state = e.state;
+      if (!state || !state.url) {
+        // volta à home: recarrega a página
+        window.location.href = 'index.html';
+        return;
+      }
+      loadPage(state.url, false);
+    });
+
+    // ----------------------------
+    // Código do mapa inicial (mostra bairros)
+    // ----------------------------
+    // aguarda o Leaflet estar carregado (script defer pode demorar)
+    function ensureLeafletReady(cb) {
+      if (window.L) return cb();
+      const check = setInterval(() => {
+        if (window.L) {
+          clearInterval(check);
+          cb();
+        }
+      }, 50);
+    }
+
+    ensureLeafletReady(() => {
+      const saoPedro = [-22.54896, -47.91417];
+      const map = L.map('map').setView(saoPedro, 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: '© Esri'
+      });
+
+      const baseLayers = {
+        "Mapa Padrão": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+        "Satélite": sat
+      };
+      L.control.layers(baseLayers).addTo(map);
+
+      const bairros = [
+        { nome: "Vila Nova", coords: [-22.5468, -47.9192] },
+        { nome: "Botânico I", coords: [-22.5530, -47.9055] },
+        { nome: "Botânico II", coords: [-22.5562, -47.9040] },
+        { nome: "Mariluz", coords: [-22.5400, -47.9105] },
+      ];
+
+      bairros.forEach((b) => {
+        L.marker(b.coords).addTo(map).bindPopup(`<strong>${b.nome}</strong><br>Passeios disponíveis 🐾`);
+      });
+
+      L.control.scale({ imperial: false }).addTo(map);
+    });
+
+    // ----------------------------
+    // Sugestão: carregar agendamento ao abrir se URL termina com agendamento.html
+    // ----------------------------
+    (function tryAutoLoad() {
+      const path = window.location.pathname.split('/').pop();
+      if (path === 'agendamento.html' || path === 'acompanhar-mapa.html' || path === 'avaliar-compartilhar.html' || path === 'contato.html') {
+        // carrega o arquivo correspondente dentro do container
+        // (evita recarregar o mapa inicial duplicado)
+        loadPage(path, false);
+      }
+    })();
+  </script>
+</body>
+
+</html>
+
+
+

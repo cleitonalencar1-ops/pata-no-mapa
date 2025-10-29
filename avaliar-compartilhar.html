@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Avaliar e Compartilhar — Pata no Mapa</title>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+  :root{
+    --primary:#0f66a8;
+    --muted:#666;
+    --bg:#f7f9fb;
+    --card:#fff;
+    --radius:10px;
+  }
+  body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; background:var(--bg); color:#1b2630;}
+  .container{max-width:1100px;margin:28px auto;padding:20px;}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 30px rgba(16,24,40,0.06);padding:20px;margin-bottom:18px;}
+  h1{margin:0 0 10px 0;font-size:20px;}
+  p.lead{margin:0 0 18px 0;color:var(--muted);}
+  .grid{display:grid;grid-template-columns:1fr 420px;gap:18px;}
+  @media(max-width:980px){ .grid{grid-template-columns:1fr;} }
+
+  /* Upload area */
+  .upload-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
+  .dropzone{flex:1;min-height:160px;border:2px dashed #dfe8ef;border-radius:8px;padding:12px;background:#fbfeff;display:flex;flex-direction:column;gap:8px;align-items:flex-start;justify-content:center;}
+  .dropzone.dragover{border-color:var(--primary);background:#f0f9ff;}
+  .btn{display:inline-block;background:var(--primary);color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;cursor:pointer;border:0;}
+  .btn.secondary{background:#e7eef6;color:var(--primary);border:1px solid #d6e6f5;}
+
+  /* Photos preview */
+  .previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+  .thumb{width:96px;height:96px;border-radius:8px;overflow:hidden;object-fit:cover;border:1px solid #e6eef6;box-shadow:0 4px 8px rgba(15,102,168,0.06);}
+
+  /* Rating */
+  .rating{display:flex;align-items:center;gap:8px;font-size:18px;}
+  .stars{display:flex;gap:6px;cursor:pointer;}
+  .star{font-size:26px;color:#d6d6d6;}
+  .star.selected{color:#f4b400; text-shadow:0 1px 0 #b07d00}
+
+  /* Map */
+  #map{width:100%;height:320px;border-radius:8px;overflow:hidden}
+
+  /* Inputs */
+  label{display:block;margin:12px 0 6px 0;font-weight:600;font-size:13px;}
+  textarea,input[type="text"], input[type="file"]{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #e6eef6;background:#fff;}
+  textarea{min-height:92px;resize:vertical}
+
+  /* Actions */
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .small{font-size:13px;color:var(--muted)}
+
+  /* Report preview */
+  .report-preview{max-height:400px;overflow:auto;border-radius:8px;padding:12px;background:#fff;border:1px dashed #e6eef6}
+  .meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .pill{background:#eef7ff;padding:6px 10px;border-radius:999px;font-weight:600;color:var(--primary);font-size:13px}
+
+  footer{margin-top:20px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Avaliar e Compartilhar</h1>
+      <p class="lead">Receba o relatório com fotos, avaliação e distância percorrida. Faça upload do GPX do passeio (ou cole coordenadas) e das fotos — gere um relatório imprimível ou compartilhe o JSON.</p>
+
+      <div class="grid">
+        <!-- Left: form -->
+        <div>
+          <!-- Upload GPX / coordenadas -->
+          <label for="gpxFile">1) Rota (arquivo GPX)</label>
+          <div class="dropzone" id="gpxDrop">
+            <div style="width:100%;display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:14px;color:var(--muted)">Arraste o arquivo .gpx aqui ou selecione.</div>
+              <input id="gpxFile" type="file" accept=".gpx" style="display:none">
+              <button class="btn secondary" id="pickGpxBtn">Selecionar GPX</button>
+            </div>
+            <small class="small">Se não tiver GPX, cole coordenadas no formato: <code>lat,lng; lat,lng; ...</code> abaixo.</small>
+            <label for="coordsInput" style="margin-top:8px;font-weight:600;font-size:13px">Ou cole coordenadas</label>
+            <textarea id="coordsInput" placeholder="Ex: -22.54896,-47.91417; -22.54910,-47.91510"></textarea>
+            <div style="margin-top:8px;">
+              <button class="btn" id="loadCoordsBtn">Carregar rota</button>
+              <button class="btn secondary" id="clearRouteBtn">Limpar rota</button>
+            </div>
+          </div>
+
+          <!-- Photos -->
+          <label for="photos">2) Fotos do passeio (até 6)</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="photos" type="file" accept="image/*" multiple>
+            <div class="small">Pré-visualização abaixo</div>
+          </div>
+          <div class="previews" id="photoPreview"></div>
+
+          <!-- Rating & comment -->
+          <label>Avaliação</label>
+          <div class="rating">
+            <div class="stars" id="stars">
+              <span class="star" data-value="1">★</span>
+              <span class="star" data-value="2">★</span>
+              <span class="star" data-value="3">★</span>
+              <span class="star" data-value="4">★</span>
+              <span class="star" data-value="5">★</span>
+            </div>
+            <div id="ratingValue" class="small">0/5</div>
+          </div>
+
+          <label for="comment">Comentário</label>
+          <textarea id="comment" placeholder="Conte como foi o passeio, pontos fortes, sugestões..."></textarea>
+
+          <div class="actions">
+            <button class="btn" id="generateReportBtn">📄 Gerar Relatório</button>
+            <button class="btn" id="downloadJsonBtn">⬇️ Baixar JSON</button>
+            <button class="btn secondary" id="resetBtn">♻️ Resetar</button>
+            <div style="margin-left:auto" class="small" id="distanceLabel">Distância: —</div>
+          </div>
+        </div>
+
+        <!-- Right: map & preview -->
+        <div>
+          <div class="card" style="padding:12px;margin-bottom:12px">
+            <div class="meta" style="justify-content:space-between">
+              <div>
+                <strong>Visualizar rota</strong>
+                <div class="small">O mapa desenha o GPX ou coordenadas carregadas</div>
+              </div>
+              <div class="pill" id="pointCount">0 pts</div>
+            </div>
+            <div id="map" style="margin-top:10px"></div>
+          </div>
+
+          <div class="card">
+            <strong>Relatório (pré-visualização)</strong>
+            <div class="report-preview" id="reportPreview" style="margin-top:10px">
+              <p class="small">Ainda não há relatório. Carregue rota e fotos, avalie e clique em "Gerar Relatório".</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <footer>© 2025 Pata no Mapa — Projeto acadêmico de Cleiton Alencar</footer>
+  </div>
+
+  <!-- libs -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <script>
+  // --- Utilitários ---
+  function haversineDistance(a,b){
+    // a,b: {lat, lng} degrees -> meters
+    const toRad = v => v * Math.PI/180;
+    const R = 6371000;
+    const dLat = toRad(b.lat - a.lat);
+    const dLon = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat), lat2 = toRad(b.lat);
+    const sinDlat = Math.sin(dLat/2), sinDlon = Math.sin(dLon/2);
+    const x = sinDlat*sinDlat + Math.cos(lat1)*Math.cos(lat2)*sinDlon*sinDlon;
+    const c = 2*Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+    return R*c;
+  }
+
+  // --- Mapa Leaflet ---
+  const map = L.map('map', {center:[-22.54896, -47.91417], zoom:13});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let polyline = null;
+  let pointCountEl = document.getElementById('pointCount');
+  let distanceLabel = document.getElementById('distanceLabel');
+  let points = []; // array of {lat,lng}
+
+  function updateMap(){
+    if(polyline) map.removeLayer(polyline);
+    if(points.length===0){
+      pointCountEl.textContent = '0 pts';
+      distanceLabel.textContent = 'Distância: —';
+      return;
+    }
+    polyline = L.polyline(points.map(p=>[p.lat,p.lng]), {color:'#0f66a8'}).addTo(map);
+    map.fitBounds(polyline.getBounds().pad(0.15));
+    pointCountEl.textContent = points.length + ' pts';
+    const dist = computeDistance(points);
+    distanceLabel.textContent = 'Distância: ' + formatDistance(dist);
+  }
+
+  function computeDistance(pts){
+    if(pts.length<2) return 0;
+    let sum = 0;
+    for(let i=1;i<pts.length;i++){
+      sum += haversineDistance(pts[i-1], pts[i]);
+    }
+    return sum;
+  }
+  function formatDistance(m){
+    if(m<1000) return Math.round(m) + ' m';
+    return (m/1000).toFixed(2) + ' km';
+  }
+
+  // --- GPX parsing (basic) ---
+  function parseGpxText(xmlText){
+    try {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(xmlText, "application/xml");
+      // Try trkpt
+      const trkpts = xml.querySelectorAll('trkpt');
+      if(trkpts.length>0){
+        const arr = [];
+        trkpts.forEach(n=>{
+          const lat = parseFloat(n.getAttribute('lat'));
+          const lng = parseFloat(n.getAttribute('lon'));
+          if(!isNaN(lat) && !isNaN(lng)) arr.push({lat, lng});
+        });
+        return arr;
+      }
+      // Try rtept
+      const rtepts = xml.querySelectorAll('rtept');
+      if(rtepts.length>0){
+        const arr = [];
+        rtepts.forEach(n=>{
+          const lat = parseFloat(n.getAttribute('lat'));
+          const lng = parseFloat(n.getAttribute('lon'));
+          if(!isNaN(lat) && !isNaN(lng)) arr.push({lat, lng});
+        });
+        return arr;
+      }
+    } catch(e){
+      console.warn('Erro ao parsear GPX', e);
+    }
+    return [];
+  }
+
+  // --- DOM elements ---
+  const gpxFileInput = document.getElementById('gpxFile');
+  const pickGpxBtn = document.getElementById('pickGpxBtn');
+  const gpxDrop = document.getElementById('gpxDrop');
+  const coordsInput = document.getElementById('coordsInput');
+  const loadCoordsBtn = document.getElementById('loadCoordsBtn');
+  const clearRouteBtn = document.getElementById('clearRouteBtn');
+  const photosInput = document.getElementById('photos');
+  const photoPreview = document.getElementById('photoPreview');
+  const starsEl = document.getElementById('stars');
+  const ratingValueEl = document.getElementById('ratingValue');
+  const commentEl = document.getElementById('comment');
+  const generateReportBtn = document.getElementById('generateReportBtn');
+  const reportPreview = document.getElementById('reportPreview');
+  const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  let rating = 0;
+  let photoFiles = [];
+
+  // --- Events: GPX file picker / drag-drop ---
+  pickGpxBtn.addEventListener('click', ()=> gpxFileInput.click());
+  gpxFileInput.addEventListener('change', async (ev)=>{
+    const f = ev.target.files[0];
+    if(!f) return;
+    const text = await f.text();
+    const pts = parseGpxText(text);
+    if(pts.length===0){ alert('GPX carregado, mas sem pontos ("trkpt" ou "rtept").'); return; }
+    points = pts;
+    updateMap();
+    renderReportPreview(); // update preview
+  });
+
+  // drag-n-drop
+  ['dragenter','dragover'].forEach(evt=>{
+    gpxDrop.addEventListener(evt, (e)=>{ e.preventDefault(); e.stopPropagation(); gpxDrop.classList.add('dragover'); });
+  });
+  ['dragleave','drop'].forEach(evt=>{
+    gpxDrop.addEventListener(evt, (e)=>{ e.preventDefault(); e.stopPropagation(); gpxDrop.classList.remove('dragover'); });
+  });
+  gpxDrop.addEventListener('drop', async (e)=>{
+    const f = e.dataTransfer.files[0];
+    if(!f) return;
+    if(f.name.toLowerCase().endsWith('.gpx')){
+      const txt = await f.text();
+      const pts = parseGpxText(txt);
+      if(pts.length===0){ alert('GPX sem pontos detectáveis.'); return; }
+      points = pts;
+      updateMap();
+      renderReportPreview();
+    } else {
+      alert('Por favor envie um arquivo .gpx');
+    }
+  });
+
+  // coords input load
+  loadCoordsBtn.addEventListener('click', ()=>{
+    const raw = coordsInput.value.trim();
+    if(!raw) { alert('Cole coordenadas no campo'); return; }
+    // accepted formats: lat,lng; lat,lng; ... or each per line
+    const parts = raw.split(/[;\n]+/).map(s=>s.trim()).filter(Boolean);
+    const arr = [];
+    for(const p of parts){
+      const [a,b] = p.split(',').map(x=>x.trim());
+      const lat = parseFloat(a.replace(',', '.')), lng = parseFloat(b.replace(',', '.'));
+      if(isNaN(lat) || isNaN(lng)){ alert('Coordenada inválida: ' + p); return; }
+      arr.push({lat, lng});
+    }
+    points = arr;
+    updateMap();
+    renderReportPreview();
+  });
+
+  clearRouteBtn.addEventListener('click', ()=>{ points=[]; updateMap(); renderReportPreview(); });
+
+  // Photos preview
+  photosInput.addEventListener('change', (e)=>{
+    photoFiles = Array.from(e.target.files).slice(0,6); // limit 6
+    photoPreview.innerHTML = '';
+    photoFiles.forEach(f=>{
+      const url = URL.createObjectURL(f);
+      const img = document.createElement('img');
+      img.src = url; img.className='thumb';
+      photoPreview.appendChild(img);
+    });
+    renderReportPreview();
+  });
+
+  // Rating stars
+  starsEl.addEventListener('click', (e)=>{
+    const s = e.target.closest('.star');
+    if(!s) return;
+    rating = Number(s.dataset.value);
+    updateStars();
+    renderReportPreview();
+  });
+  function updateStars(){
+    Array.from(starsEl.children).forEach(ch=>{
+      ch.classList.toggle('selected', Number(ch.dataset.value) <= rating);
+    });
+    ratingValueEl.textContent = rating + '/5';
+  }
+
+  // Generate report (opens printable window)
+  generateReportBtn.addEventListener('click', async ()=>{
+    const reportHtml = await buildReportHtml();
+    const w = window.open('', '_blank');
+    w.document.write(reportHtml);
+    w.document.close();
+  });
+
+  // Download JSON
+  downloadJsonBtn.addEventListener('click', async ()=>{
+    const payload = await buildReportPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'relatorio_passeio.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  // Reset
+  resetBtn.addEventListener('click', ()=>{
+    if(!confirm('Resetar todos os campos?')) return;
+    points = []; photoFiles = []; rating = 0;
+    coordsInput.value=''; gpxFileInput.value=''; photosInput.value=''; commentEl.value='';
+    photoPreview.innerHTML=''; updateStars(); updateMap(); renderReportPreview();
+  });
+
+  // Build report payload (JSON) with images as base64 (careful: big)
+  async function buildReportPayload(){
+    const imgs = [];
+    for(const f of photoFiles){
+      const data = await fileToBase64(f);
+      imgs.push({name:f.name, data});
+    }
+    return {
+      title: 'Relatório de Passeio — Pata no Mapa',
+      date: new Date().toISOString(),
+      rating,
+      comment: commentEl.value.trim(),
+      distance_m: Math.round(computeDistance(points)),
+      distance_human: formatDistance(computeDistance(points)),
+      points,
+      photos: imgs
+    };
+  }
+
+  async function buildReportHtml(){
+    const payload = await buildReportPayload();
+    // basic printable HTML
+    const imagesHtml = payload.photos.map(p=>`<div style="display:inline-block;margin:6px"><img src="${p.data}" style="width:160px;height:110px;object-fit:cover;border-radius:6px;border:1px solid #eee"/></div>`).join('');
+    const coordsHtml = payload.points.map((pt,i)=>`<tr><td>${i+1}</td><td>${pt.lat.toFixed(6)}</td><td>${pt.lng.toFixed(6)}</td></tr>`).join('');
+    const ratingStars = '★'.repeat(payload.rating) + '☆'.repeat(5-payload.rating);
+    const mapSnapshotNotice = payload.points.length ? '<p class="small">Mapa: visualize a rota no sistema (exporte GPX para visualização detalhada).</p>' : '';
+    return `
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>${payload.title}</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;margin:20px;color:#222}
+  h1{font-size:20px;margin-bottom:6px}
+  .meta{display:flex;gap:12px;align-items:center}
+  .pill{background:#eef7ff;padding:6px 10px;border-radius:999px;color:#0f66a8;font-weight:700}
+  .images{margin-top:12px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  table th,table td{border:1px solid #eee;padding:8px;text-align:left;font-size:13px}
+  .footer{margin-top:20px;font-size:12px;color:#666}
+  @media print{ .no-print{display:none} }
+</style>
+</head>
+<body>
+  <h1>${payload.title}</h1>
+  <div class="meta">
+    <div><strong>Data:</strong> ${new Date(payload.date).toLocaleString()}</div>
+    <div class="pill">${payload.distance_human}</div>
+    <div><strong>Avaliação:</strong> ${ratingStars} (${payload.rating}/5)</div>
+  </div>
+  <p><strong>Comentário:</strong> ${payload.comment || '—'}</p>
+  ${mapSnapshotNotice}
+  <div class="images">${imagesHtml || '<p class="small">Sem fotos.</p>'}</div>
+
+  <h3>Coordenadas da rota (${payload.points.length} pontos)</h3>
+  <table>
+    <thead><tr><th>#</th><th>Lat</th><th>Lng</th></tr></thead>
+    <tbody>${coordsHtml || '<tr><td colspan="3">Sem rota</td></tr>'}</tbody>
+  </table>
+
+  <div class="footer no-print">
+    <button onclick="window.print()">🖨️ Imprimir</button>
+    <button onclick="downloadJSON()">⬇️ Baixar JSON</button>
+  </div>
+
+<script>
+function downloadJSON(){
+  const data = ${JSON.stringify(payload,null,2)};
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'relatorio_passeio.json'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>`;
+  }
+
+  // helper: file to base64
+  function fileToBase64(file){
+    return new Promise((res,rej)=>{
+      const fr = new FileReader();
+      fr.onload = ()=> res(fr.result);
+      fr.onerror = rej;
+      fr.readAsDataURL(file);
+    });
+  }
+
+  // render preview snippet on right panel
+  async function renderReportPreview(){
+    const dist = computeDistance(points);
+    const thumbs = photoFiles.map(f=>`<img src="${URL.createObjectURL(f)}" style="width:70px;height:56px;object-fit:cover;border-radius:6px;margin-right:6px;border:1px solid #eee">`).join('');
+    const html = `
+      <div style="display:flex;gap:12px;align-items:center">
+        <div style="flex:1">
+          <div style="font-weight:700">Resumo</div>
+          <div class="small">Distância: <strong>${formatDistance(dist)}</strong></div>
+          <div class="small">Pontos: <strong>${points.length}</strong></div>
+          <div class="small" style="margin-top:8px">Avaliação: <strong>${rating}/5</strong></div>
+          <div style="margin-top:8px;color:var(--muted)">${(commentEl.value||'—')}</div>
+        </div>
+        <div>${thumbs || '<div class="small">Sem fotos</div>'}</div>
+      </div>
+      <hr style="margin:10px 0">
+      <div style="font-weight:700;margin-bottom:6px">Coordenadas (amostra)</div>
+      <div class="small">${points.slice(0,6).map((p,i)=> (i+1)+') '+p.lat.toFixed(6)+', '+p.lng.toFixed(6)).join('<br>') || '—'}</div>
+    `;
+    reportPreview.innerHTML = html;
+  }
+
+  // initial
+  updateMap();
+  updateStars();
+  renderReportPreview();
+  </script>
+</body>
+</html>

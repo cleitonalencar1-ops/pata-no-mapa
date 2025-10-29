@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pata no Mapa | Passeios Inteligentes para Pets</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    /* Manter estilos do layout original */
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #f7f9fc;
+      color: #0b1720;
+    }
+
+    header {
+      background: #fff;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header .logo img {
+      height: 50px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    nav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: 18px;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: #0b1720;
+      font-weight: 600;
+    }
+
+    .btn-agendar {
+      background: #ffcc33;
+      color: #000;
+      padding: 8px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px 20px;
+      background: #e6f2ff;
+    }
+
+    .hero-text {
+      max-width: 500px;
+    }
+
+    .hero-text h2 {
+      color: #0f66a8;
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .hero-text p {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+
+    .btn-primary {
+      background: #0f66a8;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 1100;
+      margin-right: 10px;
+    }
+
+    .hero-img img {
+      max-width: 400px;
+      width: 100%;
+      border-radius: 12px;
+    }
+
+    .steps {
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .steps h3 {
+      font-size: 28px;
+      color: #0f66a8;
+      margin-bottom: 24px;
+    }
+
+    .steps-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .step {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      flex: 1 1 200px;
+      max-width: 280px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .step img {
+      width: 60px;
+      margin-bottom: 12px;
+    }
+
+    .step h4 {
+      margin-bottom: 8px;
+      color: #0f66a8;
+    }
+
+    #map {
+      width: 100%;
+      height: 480px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .map-section {
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .benefits {
+      padding: 40px 20px;
+      text-align: center;
+      background: #e6f2ff;
+    }
+
+    .benefits-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .benefit {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      flex: 1 1 200px;
+      max-width: 280px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .benefit h4 {
+      margin-bottom: 8px;
+      color: #0f66a8;
+    }
+
+    .testimonials {
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .testimonial {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: 12px auto;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .testimonial span {
+      display: block;
+      margin-top: 8px;
+      font-weight: 600;
+      color: #0f66a8;
+    }
+
+    .contact {
+      padding: 40px 20px;
+      text-align: center;
+      background: #e6f2ff;
+    }
+
+    .contact a.btn-whatsapp {
+      display: inline-block;
+      background: #25d366;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+
+    footer {
+      background: #fff;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+    }
+
+    footer a {
+      text-decoration: none;
+      color: #0f66a8;
+      margin: 0 6px;
+    }
+
+    @media (max-width:700px) {
+      #map {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <img src="logotipo-Pata_no_Mapa.jpg" alt="Logo Pata no Mapa">
+      <span>Pata no Mapa</span>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="#inicio">Início</a></li>
+        <li><a href="#como-funciona">Como Funciona</a></li>
+        <li><a href="#mapa">Mapa</a></li>
+        <li><a href="contato.html">Contato</a></li>
+        <li><a href="#estacao">Estação</a></li>
+      </ul>
+    </nav>
+    <a href="agendamento.html" class="btn-agendar">Agendar Agora</a>
+  </header>
+
+  <!-- HERO -->
+  <section id="inicio" class="hero">
+    <div class="hero-text">
+      <h2>Passeios mapeados com carinho e tecnologia</h2>
+      <p>Agende e acompanhe o trajeto do seu pet em tempo real. Serviço de passeios - local em São Pedro e Águas de São
+        Pedro.</p>
+      <a href="cadastro.html" class="btn-primary">Cadastre-se Agora</a>
+      <a href="acompanhar-mapa.html" class="btn-primary">Acompanhar no Mapa</a>
+    </div>
+    <div class="hero-img">
+      <img src="Pata_no_Mapa.jpg" alt="Cachorro feliz em passeio">
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="como-funciona" class="steps">
+    <h3>Como Funciona</h3>
+    <div class="steps-container">
+      <div class="step">
+        <img src="icon1.png" alt="Agendamento">
+        <h4>1. Agende o Passeio</h4>
+        <p>Escolha o melhor dia e horário diretamente pelo site.</p>
+      </div>
+      <div class="step">
+        <img src="icon2.png" alt="Acompanhar no mapa">
+        <h4>2. Acompanhe no Mapa</h4>
+        <p>Veja o percurso e as paradas em tempo real via GPS.</p>
+      </div>
+      <div class="step">
+        <img src="icon3.png" alt="Avaliar e compartilhar">
+        <h4>3. Avalie e Compartilhe</h4>
+        <p>Receba o relatório com fotos e distância percorrida.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAPA -->
+  <section id="mapa" class="map-section">
+    <h3>Mapa dos Passeios — São Pedro (SP)</h3>
+    <p>Confira as rotas e bairros onde os passeios acontecem 🐾</p>
+    <div id="map"></div>
+  </section>
+
+  <!-- BENEFÍCIOS -->
+  <section class="benefits">
+    <h3>Por que escolher o Pata no Mapa?</h3>
+    <div class="benefits-container">
+      <div class="benefit">
+        <h4>✅ Passeios rastreados por GPS</h4>
+        <p>Passeios realizados de bicicleta, com zero emissão de carbono.</p>
+      </div>
+      <div class="benefit">
+        <h4>📍 Relatórios com rotas e fotos</h4>
+        <p>Rotas registradas com precisão e relatórios automáticos.</p>
+      </div>
+      <div class="benefit">
+        <h4>🐕 Bem-estar Animal</h4>
+        <p>Cada passeio é pensado com segurança e carinho pelo seu pet.</p>
+      </div>
+    </div>
+  </section>
+
+    <!-- ESTAÇÃO METEOROLÓGICA -->
+  <section id="estacao" class="map-section">
+    <h3>🌤️ Estação Meteorológica — Alpes das Águas (ISOPED25)</h3>
+    <p>Dados em tempo real de temperatura, umidade, vento e chuva.</p>
+
+    <div class="card" style="background:#fff;border-radius:12px;padding:16px;max-width:900px;margin:0 auto;box-shadow:0 6px 18px rgba(0,0,0,0.06);">
+      <iframe 
+        src="https://www.wunderground.com/dashboard/pws/ISOPED25"
+        width="100%" height="520" 
+        style="border:0;display:block;border-radius:10px;">
+      </iframe>
+    </div>
+  </section>
+
+
+  <!-- DEPOIMENTOS -->
+  <section class="testimonials">
+    <h3>Depoimentos</h3>
+    <div class="testimonial">
+      <p>“O passeio da Nina foi incrível! Recebi o mapa completo e fotos dela no parque.”</p>
+      <span>— Carla, tutora da Nina 🐶</span>
+    </div>
+    <div class="testimonial">
+      <p>“Acompanhei tudo pelo mapa! Super confiável e pontual.”</p>
+      <span>— Lucas, tutor do Thor 🐕</span>
+    </div>
+  </section>
+
+  <!-- CONTATO -->
+  <section id="contato" class="contact">
+    <h3>Entre em Contato</h3>
+    <p>Quer agendar um passeio ou tirar dúvidas? Fale comigo!</p>
+    <a href="https://wa.me/5519996610197" target="_blank" class="btn-whatsapp">💬 Falar no WhatsApp</a>
+    <p class="email">ou envie um e-mail para <strong>cleiton.alencar1@gmail.com</strong></p>
+    <br>
+    <a href="pagamento.html" class="btn-primary">Pagamento</a>
+  </section>
+
+  <!-- RODAPÉ -->
+  <footer>
+    <p>© 2025 Pata no Mapa — Projeto acadêmico de Cleiton Alencar • Curso de Geotecnologias e SIG</p>
+    <div>
+      <a href="#inicio">Início</a> |
+      <a href="#como-funciona">Como Funciona</a> |
+      <a href="#mapa">Mapa</a> |
+      <a href="contato.html">Contato</a>
+    </div>
+  </footer>
+
+  <!-- SCRIPT MAPA -->
+  <script>
+    const saoPedro = [-22.54896, -47.91417];
+    const map = L.map('map').setView(saoPedro, 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const bairros = [
+      { nome: "Vila Nova", coords: [-22.5468, -47.9192] },
+      { nome: "Botânico I", coords: [-22.5530, -47.9055] },
+      { nome: "Botânico II", coords: [-22.5562, -47.9040] },
+      { nome: "Mariluz", coords: [-22.5400, -47.9105] }
+    ];
+
+    bairros.forEach(b => {
+      L.marker(b.coords).addTo(map).bindPopup(`<strong>${b.nome}</strong><br>Passeios disponíveis 🐾`);
+    });
+
+    L.control.scale({ imperial: false }).addTo(map);
+  </script>
+
+</body>
+
+</html>

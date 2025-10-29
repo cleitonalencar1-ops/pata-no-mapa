@@ -1,0 +1,365 @@
+/* 🌎 Fonte e base */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Open+Sans&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  background-color: #f5f8fa;
+  color: #333;
+  overflow-x: hidden;
+}
+
+/* 🌐 HEADER */
+header {
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+  z-index: 999;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 2300px;
+  margin: 0 auto;
+  padding: 12px 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo img {
+  width: 45px;
+  height: 45px;
+}
+
+.logo h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.4rem;
+  color: #3BAFDA;
+  font-weight: 600;
+}
+
+nav ul {
+  display: flex;
+  gap: 25px;
+  list-style: none;
+}
+
+nav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+nav a:hover {
+  color: #3BAFDA;
+}
+
+.btn-agendar {
+  background-color: #FFC107;
+  color: #333;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.btn-agendar:hover {
+  background-color: #ffca28;
+}
+
+/* 🐶 HERO SECTION */
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1500px;
+  margin: 100px auto 60px;
+  padding: 0 20px;
+}
+
+.hero-text {
+  flex: 1;
+  min-width: 300px;
+  padding-right: 20px;
+}
+
+.hero-text h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2rem;
+  color: #2e7d32;
+  margin-bottom: 15px;
+}
+
+.hero-text p {
+  font-size: 1.1rem;
+  margin-bottom: 25px;
+  color: #555;
+}
+
+.btn-primary {
+  background-color: #3BAFDA;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: #2b8da8;
+}
+
+.hero-img img {
+  max-width: 220px;
+  border-radius: 20px;
+}
+
+/* 🗺️ COMO FUNCIONA */
+.steps {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: #ffffff;
+}
+
+.steps h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.8rem;
+  margin-bottom: 40px;
+  color: #2e7d32;
+}
+
+.steps-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 120px;
+}
+
+.step {
+  background-color: #f0f9ff;
+  border-radius: 15px;
+  padding: 25px;
+  width: 280px;
+  transition: 0.3s;
+}
+
+.step:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.step img {
+  width: 60px;
+  margin-bottom: 15px;
+}
+
+.step h4 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+/* 🧭 MAPA INTERATIVO */
+.map-section {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.map-section h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.8rem;
+  color: #2e7d32;
+  margin-bottom: 10px;
+}
+
+.map-section p {
+  color: #555;
+  margin-bottom: 20px;
+}
+
+#map {
+  height: 400px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* 💚 BENEFÍCIOS */
+.benefits {
+  background-color: #e8f5e9;
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.benefits h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.8rem;
+  color: #2e7d32;
+  margin-bottom: 90px;
+}
+
+.benefits-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 90px;
+}
+
+.benefit {
+  background-color: #ffffff;
+  border-radius: 15px;
+  padding: 25px;
+  width: 280px;
+  transition: 0.3s;
+}
+
+.benefit:hover {
+  transform: scale(1.03);
+}
+
+.benefit h4 {
+  color: #3BAFDA;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+/* 🗣️ DEPOIMENTOS */
+.testimonials {
+  background-color: #ffffff;
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.testimonials h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.8rem;
+  color: #2e7d32;
+  margin-bottom: 40px;
+}
+
+.testimonial {
+  max-width: 700px;
+  margin: 20px auto;
+  background-color: #f0f9ff;
+  padding: 25px;
+  border-radius: 15px;
+  font-style: italic;
+}
+
+/* 📞 CONTATO */
+.contact {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: #ffffff;
+}
+
+.contact h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.8rem;
+  color: #2e7d32;
+  margin-bottom: 15px;
+}
+
+.btn-whatsapp {
+  background-color: #25D366;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  margin: 15px 0;
+}
+
+.btn-whatsapp:hover {
+  background-color: #1ebd5f;
+}
+
+.email {
+  color: #333;
+  margin-top: 10px;
+}
+
+/* ⚙️ RODAPÉ */
+footer {
+  background-color: #2e7d32;
+  color: #fff;
+  padding: 40px 20px;
+}
+
+.footer-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.footer-info h4 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+
+.footer-links {
+  margin: 20px 0;
+}
+
+.footer-links a {
+  color: #fff;
+  text-decoration: none;
+  margin: 0 10px;
+  transition: 0.3s;
+}
+
+.footer-links a:hover {
+  color: #FFC107;
+}
+
+.footer-copy {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 10px;
+}
+
+/* 📱 RESPONSIVIDADE */
+@media (max-width: 768px) {
+  nav ul {
+    display: none;
+  }
+
+  .hero {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero-img img {
+    max-width: 300px;
+    margin-top: 20px;
+  }
+
+  .steps-container,
+  .benefits-container {
+    flex-direction: column;
+    align-items: center;
+  }
+}
