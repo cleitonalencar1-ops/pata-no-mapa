@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "nome": "Parque das Águas",
+    "latitude": -22.580000,
+    "longitude": -47.894000
+  },
+  {
+    "id": 2,
+    "nome": "Trilha da Serra",
+    "latitude": -22.581000,
+    "longitude": -47.892000
+  },
+  {
+    "id": 3,
+    "nome": "Praça Central",
+    "latitude": -22.579000,
+    "longitude": -47.893000
+  }
+]
